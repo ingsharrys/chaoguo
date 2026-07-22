@@ -5,18 +5,6 @@ require_once '../helpers/Session.php';
 require_once '../helpers/Token.php';
 
 class AuthController {
-    /**
-     * Validación reCAPTCHA en el login.
-     * DESACTIVADA: las llaves reCAPTCHA están registradas por dominio en
-     * Google; si la llave no corresponde a este dominio, el login rechaza
-     * SIEMPRE con "Credenciales incorrectas" aunque la contraseña sea
-     * correcta. Para reactivarla: registra el dominio en
-     * https://www.google.com/recaptcha/admin, coloca la clave de sitio en
-     * views/login.php, la clave secreta en verifyRecaptcha() y cambia
-     * esta constante a true.
-     */
-    const RECAPTCHA_ENABLED = false;
-
     private $db;
     private $user;
 
@@ -27,8 +15,8 @@ class AuthController {
     }
 
     public function login($email, $password, $recaptcha_token) {
-        // 1️⃣ **Validar el reCAPTCHA (solo si está habilitado)**
-        if (self::RECAPTCHA_ENABLED && !$this->verifyRecaptcha($recaptcha_token)) {
+        // 1️⃣ **Validar el reCAPTCHA**
+        if (!$this->verifyRecaptcha($recaptcha_token)) {
             return false;
         }
 

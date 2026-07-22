@@ -21,27 +21,17 @@ $fecha_actual = date('Y-m-d');
 // Convertir timestamp JS (milisegundos) a formato MySQL
 $since_mysql = $since > 0 ? date('Y-m-d H:i:s', $since / 1000) : null;
 
-/* Se muestran los turnos de HOY y, además, los de días anteriores que
-   sigan asociados a una mesa abierta y sin pagar. Sin esta condición,
-   una mesa que quedó abierta de un día para otro desaparecía del panel
-   y ya no se podía cobrar ni cerrar. */
 $query = "
-    SELECT t.id_t, t.id_pedido, t.turno, t.fecha, t.tipo_solicitud, t.estado,
+    SELECT t.id_t, t.id_pedido, t.turno, t.fecha, t.tipo_solicitud, t.estado, 
            t.updated_at,
-           c.cliente, c.celular, c.direccion, c.barrio,
-           (SELECT COUNT(*) FROM caja WHERE id_pedidoc = t.id_pedido) AS pagado,
-           (SELECT COUNT(*) FROM domicilios WHERE id_pedido = t.id_pedido AND id_domi IS NOT NULL) AS tiene_domiciliario,
+           c.cliente, c.celular, c.direccion, c.barrio, 
+           (SELECT COUNT(*) FROM caja WHERE id_pedidoc = t.id_pedido) AS pagado, 
+           (SELECT COUNT(*) FROM domicilios WHERE id_pedido = t.id_pedido AND id_domi IS NOT NULL) AS tiene_domiciliario, 
            (SELECT COUNT(*) FROM domicilios WHERE id_pedido = t.id_pedido) AS tiene_precio
     FROM turnero t
     LEFT JOIN clientes c ON t.id_cliente = c.id
     WHERE t.tipo_solicitud = :tipo_solicitud
-    AND (
-        DATE(t.fecha) = :fecha_actual
-        OR (
-            t.id_pedido IN (SELECT m.id_pedido FROM mesas m WHERE m.id_pedido IS NOT NULL)
-            AND NOT EXISTS (SELECT 1 FROM caja cj WHERE cj.id_pedidoc = t.id_pedido)
-        )
-    )";
+    AND DATE(t.fecha) = :fecha_actual";
 
 if ($since_mysql) {
     $query .= " AND t.updated_at > :since";

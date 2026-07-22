@@ -70,52 +70,28 @@ try {
         ':cli'      =>$data->id_cliente ?? 1
     ]);
 
-    /* ─────────────────────  4. Insertar cada producto  ────────────────
-       IMPORTANTE: el panel admin lee los pedidos con
-       "JOIN clientes ON pedidos.id_cliente = clientes.id" y
-       "JOIN productos ON pedidos.producto = productos.nombre",
-       y filtra/ordena por estado y estado_boton. Si estas columnas
-       quedan vacías el pedido existe en la BD pero NUNCA aparece en
-       el administrador. Por eso aquí se llenan todas.               */
-    $estado     = !empty($data->estado)     ? $data->estado     : 'nuevo';
-    $id_cliente = !empty($data->id_cliente) ? $data->id_cliente : 1;
-
-    $stmtProd = $db->prepare("SELECT nombre, prefijo FROM productos WHERE id_pro = :id LIMIT 1");
-
+    /* ─────────────────────  4. Insertar cada producto  ──────────────── */
     $stmtP = $db->prepare("
         INSERT INTO pedidos
-        (id_cliente,id_pro,producto,prefijos,cantidad,numero_pedido,
-         tipo_solicitud,detalle,tipo_producto,mesa,mesero,
-         estado,estado_boton,fecha)
+        (id_pro,cantidad,numero_pedido,tipo_solicitud,detalle,
+         tipo_producto,mesa,mesero,fecha)
         VALUES
-        (:id_cli,:id_pro,:producto,:prefijos,:cant,:num_ped,
-         :tipo,:det,:tipo_prod,:mesa,:mesero,
-         :estado,'nuevo',NOW())
+        (:id_pro,:cant,:num_ped,:tipo,:det,:tipo_prod,:mesa,:mesero,NOW())
     ");
 
     foreach ($data->productos as $p) {
         if (($p->cantidad ?? 0) <= 0) {
             throw new Exception("Cantidad inválida en producto {$p->id_pro}", 422);
         }
-
-        /* nombre y prefijo se buscan en la BD (fuente confiable);
-           si no se encuentra, se usa lo que envió la app */
-        $stmtProd->execute([':id' => $p->id_pro]);
-        $prodInfo = $stmtProd->fetch(PDO::FETCH_ASSOC) ?: [];
-
         $stmtP->execute([
-            ':id_cli'    => $id_cliente,
             ':id_pro'    => $p->id_pro,
-            ':producto'  => $prodInfo['nombre']  ?? ($p->nombre  ?? ''),
-            ':prefijos'  => $prodInfo['prefijo'] ?? ($p->prefijo ?? ''),
             ':cant'      => $p->cantidad,
             ':num_ped'   => $numero_pedido,
             ':tipo'      => $data->tipo_solicitud,
             ':det'       => $p->detalle ?? '',
             ':tipo_prod' => $p->tipo_prod ?? '',
             ':mesa'      => $data->numeroMesa,
-            ':mesero'    => $data->id_mesero ?? null,
-            ':estado'    => $estado
+            ':mesero'    => $data->id_mesero ?? null
         ]);
     }
 

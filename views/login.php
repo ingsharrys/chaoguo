@@ -11,7 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     require_once '../controllers/AuthController.php';
     $auth = new AuthController();
 
-    if ($auth->login($_POST['email'], $_POST['password'], $_POST['recaptcha_token'] ?? '')) {
+    if ($auth->login($_POST['email'], $_POST['password'], $_POST['recaptcha_token'])) {
         header("Location: ../public");
         exit();
     } else {
