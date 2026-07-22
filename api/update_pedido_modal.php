@@ -37,10 +37,25 @@ try {
     $numero_pedido = $data->numero_pedido;
     $response = [];
 
+    /* Contexto del pedido existente (mesero, cliente, estados) para que las
+       filas nuevas queden completas y visibles en el panel admin. */
+    $stmtCtx = $db->prepare("
+        SELECT mesero, id_cliente, estado, estado_boton
+        FROM pedidos
+        WHERE numero_pedido = :np
+        ORDER BY id_pedido DESC
+        LIMIT 1
+    ");
+    $stmtCtx->execute([':np' => $numero_pedido]);
+    $ctx = $stmtCtx->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    /* Consulta reutilizable para nombre y prefijo del producto */
+    $stmtProd = $db->prepare("SELECT nombre, prefijo FROM productos WHERE id_pro = :id LIMIT 1");
+
     foreach ($data->productos as $producto) {
         if (!isset($producto->id_pro)) continue;
 
-        if ($pedido->checkIfProductExists($producto->id_pro, $numero_pedido)) {
+        if ($pedido->checkIfProductExists($producto->id_pro, $numero_pedido, $producto->tipo_prod ?? null)) {
             $ok = $pedido->updateProduct($producto, $numero_pedido);
             $response[] = [
                 "id_pro"  => $producto->id_pro,
@@ -49,15 +64,24 @@ try {
                 "error"   => $ok ? null : $pedido->getLastError()
             ];
         } else {
+            $stmtProd->execute([':id' => $producto->id_pro]);
+            $prodInfo = $stmtProd->fetch(PDO::FETCH_ASSOC) ?: [];
+
             $pedido->id_produ       = $producto->id_pro;
+            $pedido->producto       = $prodInfo['nombre']  ?? ($producto->nombre  ?? '');
+            $pedido->prefijos       = $prodInfo['prefijo'] ?? ($producto->prefijo ?? '');
             $pedido->cantidad       = $producto->cantidad ?? 1;
             $pedido->numero_pedido  = $numero_pedido;
-            $pedido->estado         = $data->estado;
+            $pedido->estado         = $ctx['estado'] ?? ($data->estado ?: 'nuevo');
+            $pedido->estado_boton   = $ctx['estado_boton'] ?? 'nuevo';
             $pedido->tipo_solicitud = $data->tipo_solicitud;
             $pedido->detalle        = $producto->detalle ?? '';
             $pedido->tipo_producto  = $producto->tipo_prod ?? '';
             $pedido->mesa           = $producto->mesa ?? $data->numeroMesa;
-            $pedido->mesero         = $data->mesero ?? null;
+            /* la columna mesero guarda el id del mesero (id_mese); se toma
+               del pedido existente porque la app envía el nombre aquí */
+            $pedido->mesero         = $ctx['mesero'] ?? ($data->id_mesero ?? null);
+            $pedido->id_cliente     = $ctx['id_cliente'] ?? 1;
 
             $ok = $pedido->create();
             $response[] = [
