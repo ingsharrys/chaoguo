@@ -14,6 +14,11 @@ class Pedido {
     public $tipo_producto;   // mapeado a columna `tipo_producto`
     public $mesa;            // mapeado a columna `mesa`
     public $mesero;          // mapeado a columna `mesero`
+    public $id_cliente = 1;  // mapeado a columna `id_cliente` (requerido por el panel admin)
+    public $producto = '';   // mapeado a columna `producto` (nombre, requerido por el panel admin)
+    public $prefijos = '';   // mapeado a columna `prefijos`
+    public $estado = 'nuevo';        // mapeado a columna `estado`
+    public $estado_boton = 'nuevo';  // mapeado a columna `estado_boton`
 
     // Atributo para almacenar el último error
     private $last_error;
@@ -32,12 +37,16 @@ class Pedido {
         date_default_timezone_set('America/Bogota');
         $this->fecha = date('Y-m-d H:i:s');  // Genera la fecha actual
 
-        // Insert con las columnas reales de tu tabla `pedidos`
+        // Insert con las columnas reales de tu tabla `pedidos`.
+        // Incluye id_cliente, producto, prefijos, estado y estado_boton:
+        // sin ellas el panel admin no muestra el pedido.
         $query = "
             INSERT INTO {$this->table_name}
-            (id_pro, cantidad, fecha, numero_pedido, tipo_solicitud, detalle, tipo_producto, mesa, mesero)
+            (id_cliente, id_pro, producto, prefijos, cantidad, fecha, numero_pedido,
+             tipo_solicitud, detalle, tipo_producto, mesa, mesero, estado, estado_boton)
             VALUES
-            (:id_pro, :cantidad, :fecha, :numero_pedido, :tipo_solicitud, :detalle, :tipo_producto, :mesa, :mesero)
+            (:id_cliente, :id_pro, :producto, :prefijos, :cantidad, :fecha, :numero_pedido,
+             :tipo_solicitud, :detalle, :tipo_producto, :mesa, :mesero, :estado, :estado_boton)
         ";
 
         $stmt = $this->conn->prepare($query);
@@ -51,9 +60,17 @@ class Pedido {
         $this->tipo_producto  = htmlspecialchars(strip_tags($this->tipo_producto));
         $this->mesa           = htmlspecialchars(strip_tags($this->mesa));
         $this->mesero         = htmlspecialchars(strip_tags($this->mesero));
+        $this->id_cliente     = htmlspecialchars(strip_tags($this->id_cliente ?: 1));
+        $this->producto       = htmlspecialchars(strip_tags($this->producto ?? ''));
+        $this->prefijos       = htmlspecialchars(strip_tags($this->prefijos ?? ''));
+        $this->estado         = htmlspecialchars(strip_tags($this->estado ?: 'nuevo'));
+        $this->estado_boton   = htmlspecialchars(strip_tags($this->estado_boton ?: 'nuevo'));
 
         // Asignar parámetros
+        $stmt->bindParam(":id_cliente",     $this->id_cliente);
         $stmt->bindParam(":id_pro",         $this->id_produ);
+        $stmt->bindParam(":producto",       $this->producto);
+        $stmt->bindParam(":prefijos",       $this->prefijos);
         $stmt->bindParam(":cantidad",       $this->cantidad);
         $stmt->bindParam(":fecha",          $this->fecha);
         $stmt->bindParam(":numero_pedido",  $this->numero_pedido);
@@ -62,6 +79,8 @@ class Pedido {
         $stmt->bindParam(":tipo_producto",  $this->tipo_producto);
         $stmt->bindParam(":mesa",           $this->mesa);
         $stmt->bindParam(":mesero",         $this->mesero);
+        $stmt->bindParam(":estado",         $this->estado);
+        $stmt->bindParam(":estado_boton",   $this->estado_boton);
 
         // Ejecutar
         if($stmt->execute()){
