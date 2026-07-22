@@ -1,0 +1,18 @@
+[
+    {
+        "numero_pedido": "63664",
+        "total_a_pagar": 41000,
+        "metodo_pago": null,
+        "efectivo": null,
+        "banco": null,
+        "referencia": null
+    },
+    {
+        "numero_pedido": "87368",
+        "total_a_pagar": 98000,
+        "metodo_pago": null,
+        "efectivo": null,
+        "banco": null,
+        "referencia": null
+    }
+]

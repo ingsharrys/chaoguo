@@ -1,0 +1,150 @@
+Solicitud recibida: Array
+(
+    [client] => +57 316 3667467
+    [addres] => Calle 14 No 1-02
+    [name] => Dario Charry
+    [comment] => Sin ensalada
+    [producto1] => Arroz con Camarón
+    [cantidad] => 1
+    [precio] => 9000
+    [color] => null
+    [tipo] => 1L
+    [producto2] => Jugo Natural Cholupa
+)
+
+Solicitud recibida: Array
+(
+    [client] => +57 316 3667467
+    [addres] => Calle 14 No 1-02
+    [name] => Dario Charry
+    [comment] => Sin ensalada
+    [producto1] => Arroz con Camarón
+    [cantidad] => 1
+    [precio] => 9000
+    [color] => null
+    [tipo] => 1L
+    [producto2] => Jugo Natural Cholupa
+)
+
+Solicitud recibida: Array
+(
+    [client] => +57 316 3667467
+    [addres] => Calle 14 No 1-02
+    [name] => Dario Charry
+    [comment] => Sin ensalada
+    [producto1] => Arroz con Camarón
+    [cantidad] => 1
+    [precio] => 9000
+    [color] => null
+    [tipo] => 1L
+    [producto2] => Jugo Natural Cholupa
+)
+
+Solicitud recibida: Array
+(
+    [client] => +57 317 3667467
+    [addres] => Calle 7 No 78
+    [name] => Dario Andres
+    [comment] => sin
+    [producto1] => Arroz Chino con todas las carnes
+    [cantidad1] => 1
+    [precio1] => 45000
+    [color1] => amarillo
+    [tipo1] => entero
+    [producto2] => Coca-Cola
+    [cantidad2] => 1
+    [precio2] => 8000
+    [color2] => null
+    [tipo2] => 15L
+)
+
+Solicitud recibida: Array
+(
+    [client] => +57 317 3667467
+    [addres] => Calle 7 No 78
+    [name] => Dario Andres
+    [comment] => no
+    [producto1] => Arroz Chino con todas las carnes
+    [cantidad1] => 1
+    [precio1] => 45000
+    [color1] => amarillo
+    [tipo1] => entero
+    [producto2] => Coca-Cola
+    [cantidad2] => 1
+    [precio2] => 8000
+    [color2] => null
+    [tipo2] => 15L
+)
+
+Solicitud recibida: Array
+(
+    [client] => +57 317 3667467
+    [addres] => Calle 7 No 78
+    [name] => Dario Andres
+    [comenta] => null
+    [producto1] => Arroz Chino con todas las carnes
+    [cantidad1] => 1
+    [precio1] => 45000
+    [color1] => amarillo
+    [tipo1] => entero
+    [producto2] => Coca-Cola
+    [cantidad2] => 1
+    [precio2] => 8000
+    [color2] => null
+    [tipo2] => 15L
+)
+
+Solicitud recibida: Array
+(
+    [client] => +57 317 3667467
+    [addres] => Calle 7 No 78
+    [name] => Dario Andres
+    [comenta] => null
+    [producto1] => Arroz Chino con todas las carnes
+    [cantidad1] => 1
+    [precio1] => 45000
+    [color1] => amarillo
+    [tipo1] => entero
+    [producto2] => Coca-Cola
+    [cantidad2] => 1
+    [precio2] => 8000
+    [color2] => null
+    [tipo2] => 15L
+)
+
+Solicitud recibida: Array
+(
+    [client] => +57 317 3667467
+    [addres] => Calle 7 No 78
+    [name] => Dario Andres
+    [comenta] => null
+    [producto1] => Arroz Chino con todas las carnes
+    [cantidad1] => 1
+    [precio1] => 45000
+    [color1] => amarillo
+    [tipo1] => entero
+    [producto2] => Coca-Cola
+    [cantidad2] => 1
+    [precio2] => 8000
+    [color2] => null
+    [tipo2] => 15L
+)
+
+Solicitud recibida: Array
+(
+    [client] => +57 317 3667467
+    [addres] => Calle 7 No 78
+    [name] => Dario Andres
+    [comenta] => null
+    [producto1] => Arroz Chino con todas las carnes
+    [cantidad1] => 1
+    [precio1] => 45000
+    [color1] => amarillo
+    [tipo1] => entero
+    [producto2] => Coca-Cola
+    [cantidad2] => 1
+    [precio2] => 8000
+    [color2] => null
+    [tipo2] => 1.5L
+)
+

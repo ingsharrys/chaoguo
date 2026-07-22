@@ -1,0 +1,12 @@
+node_modules/
+vendor/
+storage/
+config/database.php
+*.pem
+*.cer
+digital-certificate.txt
+.env
+error_log
+*.log
+Thumbs.db
+desktop.ini

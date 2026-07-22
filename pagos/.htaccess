@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteBase /
+
+# Redirige todas las solicitudes de URL cortas al script de redirección
+RewriteRule ^([a-zA-Z0-9]+)$ redirect.php?code=$1 [L]

@@ -1,0 +1,230 @@
+/* =========================================== */
+/* ESTILOS LOGIN*/
+/* =========================================== */
+
+        .cuerpo {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            max-width: 400px;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .login-container h3 {
+            font-weight: 600;
+            color: #ff416c;
+            text-align: center;
+        }
+        .brand-logo {
+            display: block;
+            width: 120px;
+            margin: 0 auto 1rem;
+        }
+        .btn-primary {
+            background: #ff416c;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #ff4b2b;
+        }
+        
+        
+
+/* Personalizar el ancho y alto de la barra */
+::-webkit-scrollbar {
+    width: 5px; /* Ancho para barras verticales */
+    height: 5px; /* Alto para barras horizontales */
+}
+
+/* Fondo de la barra de desplazamiento */
+::-webkit-scrollbar-track {
+    background: white;
+    border-radius: 10px;
+}
+
+/* Estilo de la parte deslizable (el thumb) */
+::-webkit-scrollbar-thumb {
+    background: white;
+    border-radius: 10px;
+}
+
+/* Cambiar el color cuando el usuario pasa el cursor sobre la barra */
+::-webkit-scrollbar-thumb:hover {
+    background: gray;
+}
+
+body {
+    display: flex;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+@media (min-width: 576px) {
+    .modal-dialog {
+        max-width: 700px !important;
+        margin: 1.75rem auto;
+    }
+}
+
+.sidebar {
+    overflow: auto;
+    width: 150px;
+    background: #333;
+    color: #fff;
+    /* padding: 15px; */
+    height: 100vh;
+    position: fixed;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 10px 0;
+    /* text-align: center; */
+}
+
+.sidebar ul li a {
+    color: #fff;
+    text-decoration: none;
+    display: block;
+    padding-left: 10%;
+}
+
+.sidebar ul li:hover {
+    background: #575757;
+}
+
+.sidebar ul li.active {
+    font-weight: bold;
+    color: #000000;
+    background-color: #ffffff;
+    border-radius: 8px 0 0 8px;
+}
+
+.sidebar ul li.active a {
+    color: #000000;
+}
+
+.info-box {
+    padding-left: 10%;
+}
+
+.btn-salir {
+    border: 1px red solid;
+}
+
+.btn-salir a {
+    color: red !important;
+}
+
+.content {
+    flex: 1;
+    padding: 10px;
+    margin-left: 150px;
+}
+
+#content-area {
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    PLACE-ITEMS: CENTER;
+}
+
+.btn_delete, .btn_edit {
+    width: 100%;
+    margin: 0.5% 0;
+    font-size: 1rem;
+    padding: .375rem .75rem;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+}
+
+/* =========================================== */
+/* Formulario de registro */
+/* =========================================== */
+
+.form-container-register, .container-gastos {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.txt_register {
+    margin-bottom: 20px;
+}
+
+.input_register {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.button_register {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.button_register:hover {
+    background-color: #45a049;
+}
+
+/* =========================================== */
+/* Formulario de gastos */
+/* =========================================== */
+
+.input_gastos {
+    width: 100%;
+    padding: 10px;
+    margin: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+
+/* =========================================== */
+/* Tabs de gastos */
+/* =========================================== */
+
+.ts-map-tabs ul li a.active {
+    color: #000000;
+    background: white;
+    border-radius: 15px 0;
+    border: 2px solid #000000;
+}    
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+
