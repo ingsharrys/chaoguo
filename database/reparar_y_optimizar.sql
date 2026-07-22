@@ -49,6 +49,7 @@ CREATE INDEX idx_turnero_pedido      ON turnero (id_pedido);
 CREATE INDEX idx_turnero_fecha_tipo  ON turnero (fecha, tipo_solicitud);
 CREATE INDEX idx_caja_pedido         ON caja (id_pedidoc);
 CREATE INDEX idx_comentarios_pedido  ON comentarios (id_pedido);
+CREATE INDEX idx_mesas_pedido        ON mesas (id_pedido);
 
 -- ----------------------------------------------------------------------------
 -- 3. SINCRONIZAR el consecutivo de pedidos

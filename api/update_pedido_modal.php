@@ -55,7 +55,7 @@ try {
     foreach ($data->productos as $producto) {
         if (!isset($producto->id_pro)) continue;
 
-        if ($pedido->checkIfProductExists($producto->id_pro, $numero_pedido)) {
+        if ($pedido->checkIfProductExists($producto->id_pro, $numero_pedido, $producto->tipo_prod ?? null)) {
             $ok = $pedido->updateProduct($producto, $numero_pedido);
             $response[] = [
                 "id_pro"  => $producto->id_pro,

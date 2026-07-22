@@ -99,15 +99,18 @@ class Pedido {
      * (Ajusta si quieres actualizar mesa, mesero, etc.)
      */
     public function updateProduct($producto, $numero_pedido) {
+        /* El WHERE incluye tipo_producto: un mismo id_pro puede estar en el
+           pedido con varios tipos (Grande, Pequeño...) y solo debe
+           actualizarse la fila del tipo editado. */
         $query = "
             UPDATE {$this->table_name}
             SET
                 cantidad       = :cantidad,
                 detalle        = :detalle,
-                tipo_producto  = :tipo_producto,
                 fecha          = NOW()  -- opcional, si quieres actualizar fecha
             WHERE id_pro        = :id_pro
               AND numero_pedido = :numero_pedido
+              AND tipo_producto = :tipo_producto
         ";
 
         $stmt = $this->conn->prepare($query);
@@ -139,16 +142,22 @@ class Pedido {
      * checkIfProductExists($id_pro, $numero_pedido)
      * Retorna true si existe un registro en `pedidos` con (id_pro, numero_pedido).
      */
-    public function checkIfProductExists($id_pro, $numero_pedido) {
+    public function checkIfProductExists($id_pro, $numero_pedido, $tipo_producto = null) {
         $query = "
             SELECT COUNT(*) AS total
             FROM {$this->table_name}
             WHERE id_pro = :id_pro
               AND numero_pedido = :numero_pedido
         ";
+        if ($tipo_producto !== null && $tipo_producto !== '') {
+            $query .= " AND tipo_producto = :tipo_producto";
+        }
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id_pro", $id_pro);
         $stmt->bindParam(":numero_pedido", $numero_pedido);
+        if ($tipo_producto !== null && $tipo_producto !== '') {
+            $stmt->bindParam(":tipo_producto", $tipo_producto);
+        }
         $stmt->execute();
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
 
