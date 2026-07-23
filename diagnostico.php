@@ -116,6 +116,35 @@ foreach ([__DIR__ . '/error_log', __DIR__ . '/views/error_log', __DIR__ . '/cont
         if ($mb > 50) echo "    AVISO: este log pesa {$mb} MB - conviene borrarlo con: rm $log\n\n";
     }
 }
+/* ── 9. Prueba real de registro de pedido (con ROLLBACK: no deja rastro) ── */
+echo "[9] Prueba real de registro de pedido (igual que la app, se deshace al final)...\n";
+try {
+    $db->beginTransaction();
+
+    $db->exec("UPDATE consecutivos SET valor = LAST_INSERT_ID(valor + 1) WHERE nombre = 'num_pedido'");
+    $np = (int) $db->lastInsertId();
+    if (!$np) throw new Exception("consecutivos no devolvio numero de pedido (¿falta la fila 'num_pedido'?)");
+
+    $db->prepare("INSERT INTO turnero (id_pedido, turno, fecha, tipo_solicitud, estado, id_cliente)
+                  VALUES (:np, 999, NOW(), 52, 'nuevo', 1)")->execute([':np' => $np]);
+
+    $prod = $db->query("SELECT id_pro, nombre, prefijo FROM productos LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+    if (!$prod) throw new Exception('la tabla productos esta vacia');
+
+    $db->prepare("INSERT INTO pedidos
+        (id_cliente, id_pro, producto, prefijos, cantidad, numero_pedido,
+         tipo_solicitud, detalle, tipo_producto, mesa, mesero, estado, estado_boton, fecha)
+        VALUES (1, :id_pro, :producto, :prefijos, 1, :np, 52, '', 'PRUEBA', 1, NULL, 'nuevo', 'nuevo', NOW())")
+       ->execute([':id_pro' => $prod['id_pro'], ':producto' => $prod['nombre'],
+                  ':prefijos' => $prod['prefijo'], ':np' => $np]);
+
+    $db->rollBack();
+    echo "    OK - EL REGISTRO DE PEDIDOS FUNCIONA (pedido de prueba #$np creado y deshecho).\n\n";
+} catch (Throwable $e) {
+    if ($db->inTransaction()) $db->rollBack();
+    echo "    *** ERROR EXACTO AL REGISTRAR PEDIDO ***\n    " . $e->getMessage() . "\n\n";
+}
+
 echo "\n==============================================\n";
 echo " FIN - Envia toda esta salida para analizarla.\n";
 echo " Luego borra este archivo:  rm diagnostico.php\n";
