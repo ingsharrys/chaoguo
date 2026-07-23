@@ -28,9 +28,8 @@ try {
         throw new Exception("Código de seguridad incorrecto.");
     }
 
-    // 3. Determinar si 'turnero.tipo_solicitud' == 50
-    //    Para ello, buscamos la fila en turnero
-    $queryTipo = "SELECT tipo_solicitud 
+    // 3. Determinar el tipo de solicitud (si existe en turnero)
+    $queryTipo = "SELECT tipo_solicitud
                   FROM turnero
                   WHERE id_pedido = :numero_pedido
                   LIMIT 1";
@@ -38,61 +37,52 @@ try {
     $stmtTipo->bindParam(':numero_pedido', $numero_pedido, PDO::PARAM_INT);
     $stmtTipo->execute();
     $rowTipo = $stmtTipo->fetch(PDO::FETCH_ASSOC);
+    $tipoSolicitud = $rowTipo ? (int)$rowTipo['tipo_solicitud'] : 0;
 
-    // 3a) Si no existe en turnero, podría ser un caso especial
-    //     (lanzamos excepción o lo ignoramos)
-    if (!$rowTipo) {
-        throw new Exception("No se encontró el pedido en la tabla turnero.");
-    }
+    /* Eliminación COMPLETA y atómica: todo dentro de una transacción.
+       Si algo falla, no se borra nada a medias. */
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $conn->beginTransaction();
 
-    $tipoSolicitud = (int)$rowTipo['tipo_solicitud'];
-
-    // 4. Si tipo_solicitud == 50 => Eliminar de domicilios
+    // 4. Si es domicilio (50), eliminar el registro de domicilios
     if ($tipoSolicitud === 50) {
-        $queryDomicilios = "DELETE FROM domicilios 
-                            WHERE id_pedido = :numero_pedido";
-        $stmtDom = $conn->prepare($queryDomicilios);
-        $stmtDom->bindParam(':numero_pedido', $numero_pedido, PDO::PARAM_INT);
-        if (!$stmtDom->execute()) {
-            throw new Exception("Error al eliminar registro de domicilios.");
-        }
+        $conn->prepare("DELETE FROM domicilios WHERE id_pedido = :np")
+             ->execute([':np' => $numero_pedido]);
     }
 
-    // 5. Eliminar COMENTARIOS (tabla hija con foreign key a pedidos)
-    $queryComentarios = "DELETE FROM comentarios 
-                         WHERE id_pedido = :numero_pedido";
-    $stmtCom = $conn->prepare($queryComentarios);
-    $stmtCom->bindParam(':numero_pedido', $numero_pedido, PDO::PARAM_INT);
-    if (!$stmtCom->execute()) {
-        throw new Exception("Error al eliminar los comentarios del pedido.");
-    }
+    // 5. Eliminar comentarios del pedido
+    $conn->prepare("DELETE FROM comentarios WHERE id_pedido = :np")
+         ->execute([':np' => $numero_pedido]);
 
-    // 6. Eliminar PEDIDOS (tabla hija en la FK con turnero)
-    $queryPedidos = "DELETE FROM pedidos
-                     WHERE numero_pedido = :numero_pedido
-                       AND tipo_solicitud IN (50, 51)";
-    $stmtPed = $conn->prepare($queryPedidos);
-    $stmtPed->bindParam(':numero_pedido', $numero_pedido, PDO::PARAM_INT);
-    if (!$stmtPed->execute()) {
-        throw new Exception("Error al eliminar registros de la tabla pedidos.");
-    }
+    // 6. Eliminar TODOS los productos del pedido, sin importar el tipo
+    //    de solicitud (mesas app = 52, restaurante = 51, domicilios = 50,
+    //    llamadas = 53). El filtro anterior IN (50,51) dejaba huérfanos
+    //    los pedidos de la app de mesas.
+    $conn->prepare("DELETE FROM pedidos WHERE numero_pedido = :np")
+         ->execute([':np' => $numero_pedido]);
 
-    // 7. Eliminar TURNERO (tabla padre)
-    $queryTurnero = "DELETE FROM turnero 
-                     WHERE id_pedido = :numero_pedido";
-    $stmtTur = $conn->prepare($queryTurnero);
-    $stmtTur->bindParam(':numero_pedido', $numero_pedido, PDO::PARAM_INT);
-    if (!$stmtTur->execute()) {
-        throw new Exception("Error al eliminar registro de la tabla turnero.");
-    }
+    // 7. Eliminar el turno
+    $conn->prepare("DELETE FROM turnero WHERE id_pedido = :np")
+         ->execute([':np' => $numero_pedido]);
+
+    // 8. Liberar la(s) mesa(s) que apuntaban a este pedido:
+    //    estado vacío e id_pedido en NULL (igual que liberar_mesa.php)
+    $conn->prepare("UPDATE mesas SET estado = '', id_pedido = NULL, fecha = NOW()
+                    WHERE id_pedido = :np")
+         ->execute([':np' => $numero_pedido]);
+
+    $conn->commit();
 
     // Éxito
     echo json_encode([
         'success' => true,
-        'message' => 'Pedido eliminado correctamente (domicilios, comentarios, pedidos, turnero).'
+        'message' => 'Pedido eliminado por completo (productos, comentarios, turno) y mesa liberada.'
     ]);
 
 } catch (Exception $e) {
+    if (isset($conn) && $conn->inTransaction()) {
+        $conn->rollBack();
+    }
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
