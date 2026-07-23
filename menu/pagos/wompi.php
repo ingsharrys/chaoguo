@@ -53,7 +53,7 @@
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 
-    require_once '../../rosticeria.datarie.info/config/database.php';
+    require_once '../../config/database.php';
 
     // Conectar a la base de datos
     $db = new Database();

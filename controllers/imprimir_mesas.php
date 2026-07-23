@@ -91,7 +91,7 @@ if (isset($_GET['idpedi'])) {
     <button class="btn btn-primary" onclick="printInvoice(<?php echo $id_pedido; ?>)">Imprimir Pedido</button>
 </div>
 
-<script type="text/javascript" src="https://heiyubai.datarie.info/qz-tray.js"></script>
+<script type="text/javascript" src="/qz-tray.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsrsasign@10.5.0/lib/jsrsasign-all-min.js"></script>
 <script>
 // Función para imprimir la factura utilizando QZ Tray
@@ -137,7 +137,7 @@ function printInvoice(numeroPedido) {
         let contenido = `
         \x1B\x61\x00  
         \x1B\x21\x10  
-        Restaurante Heiyubai\n
+        Restaurante Chao Guo\n
         \x1B\x21\x00  
         
         ${mesa ? 'Mesa N°: ' + mesa : 'Domicilio'}  

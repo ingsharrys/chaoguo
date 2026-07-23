@@ -271,7 +271,7 @@ console.log(codigoSeguridad);
                 if (data.success) {
                     alert('Pedido eliminado correctamente.');
                     // Redirigir después de la eliminación
-                    window.location.href = 'https://heiyubai.datarie.info/public/';
+                    window.location.href = '/public/';
                 } else {
                     // Mostrar el error devuelto por el servidor
                     alert('Error: ' + data.message);

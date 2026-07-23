@@ -1187,7 +1187,7 @@ const estado = filaTurno.children[3].innerText.trim();
 const productos = filaTurno.children[4].innerText.trim(); // Aquí tienes los productos
 
 // Generar el contenido de la impresión
-let contenido = `Restaurante Heiyubai\n`;
+let contenido = `Restaurante Chao Guo\n`;
 contenido += `TURNO N°: ${turno}\n`;
 contenido += `Pedido N°: ${numeroPedido}\n`;
 contenido += `Cliente: ${cliente}\n`;
@@ -1305,7 +1305,7 @@ let tiempo = '';  // Ajusta/elimina si no la usas
 let contenido = "\x1B\x40"; // Reset impresora
 
 // Encabezado
-contenido += "\x1B\x61\x01\x1B\x21\x30Restaurante HEIYUBAI\x1B\x21\x00\n";
+contenido += "\x1B\x61\x01\x1B\x21\x30Restaurante CHAO GUO\x1B\x21\x00\n";
 contenido += "------------------------------------------\n";
 contenido += `\x1B\x21\x20TURNO N°: ${turno}\x1B\x21\x00\n`;
 contenido += `Pedido N°: ${numeroPedido}\n`;
@@ -1473,7 +1473,7 @@ console.log('Domicilio costo', costoDomicilio)
 let contenido = "\x1B\x40"; // Reset impresora
 
 // Encabezado
-contenido += "\x1B\x61\x01\x1B\x21\x30Restaurante HEIYUBAI\x1B\x21\x00\n";
+contenido += "\x1B\x61\x01\x1B\x21\x30Restaurante CHAO GUO\x1B\x21\x00\n";
 contenido += "------------------------------------------\n";
 contenido += `\x1B\x21\x20TURNO N°: ${turno}\x1B\x21\x00\n`;
 contenido += `Pedido N°: ${numeroPedido}\n`;

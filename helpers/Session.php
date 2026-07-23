@@ -8,7 +8,7 @@ class Session
 
             // === 1) FORZAR session.save_path a una ruta propia y escribible ===
             // Ajusta a tu estructura real si difiere:
-            $baseDir = dirname(__DIR__); // .../public_html/heiyubai.datarie.info
+            $baseDir = dirname(__DIR__); // .../public_html/admin.restaurantechaoguo.com
             $sessDir = $baseDir . '/storage/sessions';
 
             if (!is_dir($sessDir)) {
@@ -21,15 +21,14 @@ class Session
             ini_set('session.gc_divisor', 100);
 
             // === 2) Cookies de sesión (ajusta según tu dominio/HTTPS) ===
-            // Si usas subdominios, mejor '.datarie.info'
-            $domain = $_SERVER['HTTP_HOST'] ?? 'datarie.info';
+            $domain = $_SERVER['HTTP_HOST'] ?? 'admin.restaurantechaoguo.com';
             $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
                        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
 
             session_set_cookie_params([
                 'lifetime' => 14400,
                 'path'     => '/',
-                'domain'   => $domain,   // o '.datarie.info' si compartes entre subdominios
+                'domain'   => $domain,
                 'secure'   => $isHttps,  // true si todo es HTTPS
                 'httponly' => true,
                 'samesite' => 'Lax',     // Lax es más amigable para flujos de login

@@ -32,7 +32,7 @@
 <input type="hidden" id="tipoSolicitud" value="51">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
-<script type="text/javascript" src="https://heiyubai.datarie.info/qz-tray.js"></script>
+<script type="text/javascript" src="/qz-tray.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsrsasign@10.5.0/lib/jsrsasign-all-min.js"></script>
 <script src="../public/js/script_old.js?cache=iui"></script>
 

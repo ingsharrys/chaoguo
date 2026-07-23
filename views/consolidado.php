@@ -29,7 +29,7 @@
     </div>
 </div>
 
-<script type="text/javascript" src="https://heiyubai.datarie.info/qz-tray.js"></script>
+<script type="text/javascript" src="/qz-tray.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsrsasign@10.5.0/lib/jsrsasign-all-min.js"></script>
 <script src="../public/js/consolidado.js?cache=9f8"></script>
 

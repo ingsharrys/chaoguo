@@ -1,6 +1,6 @@
 <?php
 
-require_once '../../rosticeria.datarie.info/config/database.php';
+require_once '../../config/database.php';
 
 // Verificar si el parámetro 'code' está presente en la URL
 if (isset($_GET['code'])) {

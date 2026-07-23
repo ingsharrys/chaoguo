@@ -44,7 +44,7 @@ if (!$detalles_pedido) {
 }
 
 // Generar contenido del ticket
-$ticket = "RESTAURANTE HEIYUBAI\n";
+$ticket = "RESTAURANTE CHAO GUO\n";
 $ticket .= "--------------------------------\n";
 $ticket .= "PEDIDO N°: " . $numero_pedido . "\n";
 $ticket .= "--------------------------------\n";

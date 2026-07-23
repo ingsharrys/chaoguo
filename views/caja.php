@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'], $_PO
     <meta charset="UTF-8">
     <title>Pago del Pedido</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script type="text/javascript" src="https://heiyubai.datarie.info/qz-tray.js"></script>
+    <script type="text/javascript" src="/qz-tray.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsrsasign@10.5.0/lib/jsrsasign-all-min.js"></script>
 </head>
 <body>
@@ -294,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'], $_PO
                 let contenido = `
                 \x1B\x61\x00  
                 \x1B\x21\x10  
-                Restaurante Heiyubai\n
+                Restaurante Chao Guo\n
                 \x1B\x21\x00  
                 
                 Pedido N°: ${numeroPedido}

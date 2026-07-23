@@ -5,13 +5,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard</title>
+    <title>Chao Guo · Administración</title>
+    <link rel="icon" type="image/jpeg" href="../public/img/logo-chaoguo.jpg">
     <link rel="stylesheet" href="../public/css/style.css?cache=<?php echo rand(10,100); ?>">
     <link  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://kit.fontawesome.com/744a196ea0.js" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://heiyubai.datarie.info/qz-tray.js"></script>
+    <script type="text/javascript" src="/qz-tray.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsrsasign@10.5.0/lib/jsrsasign-all-min.js"></script>
 </head>
 <body>

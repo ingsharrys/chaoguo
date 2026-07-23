@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Heiyubai Restaurante</title>
+    <title>Chao Guo Restaurante</title>
     <style>
         body {
             margin: 0;
@@ -151,7 +151,7 @@
 
 <div class="container">
     <img src="https://heiyubai.datarie.info/path/to/images/logo-Heiyubai.jpg" alt="Heiyubai Logo">
-    <h1>Bienvenido a Heiyubai</h1>
+    <h1>Bienvenido a Chao Guo</h1>
     <div class="button-container">
         <a href="#" id="btn-domicilio" class="btn-domicilio">Domicilio</a>
         <a href="#" id="btn-recoger" class="btn-recoger">Recoger</a>
@@ -194,8 +194,8 @@
     function updateButtonLinks(phone) {
         if (phone) {
             
-            btnDomicilio.href = `https://heiyubai.datarie.info/menu/?route=pedidos&pedido=wp&numero=${phone}`;
-            btnRecoger.href = `https://heiyubai.datarie.info/menu/?route=pedidos&pedido=call&numero=${phone}`;
+            btnDomicilio.href = `/menu/?route=pedidos&pedido=wp&numero=${phone}`;
+            btnRecoger.href = `/menu/?route=pedidos&pedido=call&numero=${phone}`;
         }
     }
 
