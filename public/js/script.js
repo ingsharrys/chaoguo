@@ -51,7 +51,16 @@ async function renderMesas() {
 }
 
 /* ═════════════ TURNOS (celda Cliente mejorada) ═════════════ */
-let lastUpdateTurnos = 0;
+let lastUpdateTurnos = '';   // marca de agua devuelta por el SERVIDOR
+let pollTurnos = 0;          // contador de ciclos (cada 4° es sync completa)
+let sonidoNuevoPedido = null;
+
+function sonarNuevoPedido() {
+  try {
+    if (!sonidoNuevoPedido) sonidoNuevoPedido = new Audio('../views/notificacion.mp3');
+    sonidoNuevoPedido.play().catch(() => {});   // el navegador puede exigir interacción previa
+  } catch (e) { /* sin audio disponible */ }
+}
 
 async function renderTurnos() {
   const cont = $('#turnos-container'); if (!cont) return;
@@ -67,14 +76,28 @@ async function renderTurnos() {
   }
 
   const tbody = $('#tbd');
-  const d = await fetch(`${TURNOS_URL}?tipo_solicitud=${tipoSol()}&since=${lastUpdateTurnos}`)
+
+  /* Cada 4 ciclos se hace una sincronización COMPLETA (para podar filas de
+     pedidos eliminados); los demás ciclos son incrementales: el servidor
+     solo devuelve lo que cambió desde la marca de agua. */
+  const fullSync = (pollTurnos++ % 4 === 0) || !lastUpdateTurnos;
+  const since = fullSync ? '' : encodeURIComponent(lastUpdateTurnos);
+
+  const d = await fetch(`${TURNOS_URL}?tipo_solicitud=${tipoSol()}&since=${since}`)
                   .then(toJSON).catch(console.error);
-  if (!d?.turnos?.length) return;
+  if (!d) return;
+  if (d.ahora) lastUpdateTurnos = d.ahora;   // reloj del servidor, no del cliente
 
-  lastUpdateTurnos = Date.now();
+  const primeraCarga = tbody.children.length === 0;
+  const idsServidor = new Set();
 
-  d.turnos.forEach(t => {
-    if (t.estado === 'entregado' && t.pagado) return;
+  (d.turnos || []).forEach(t => {
+    idsServidor.add(String(t.numero_pedido));
+
+    if (t.estado === 'entregado' && t.pagado) {
+      document.getElementById(`fila-${t.numero_pedido}`)?.remove(); // ya cerrado: fuera de pantalla
+      return;
+    }
 
     const rowClass =
       t.estado === 'nuevo'     ? 'warning' :
@@ -116,8 +139,18 @@ async function renderTurnos() {
         </tr>`);
       pintarAcciones(t);
       cargarProductos(t.numero_pedido);
+      if (!primeraCarga) sonarNuevoPedido();   // alerta sonora de pedido nuevo
     }
   });
+
+  /* En la sync completa, quitar filas de pedidos que ya no existen
+     (eliminados desde el panel u otra terminal). */
+  if (d.full) {
+    $$('#tbd tr').forEach(tr => {
+      const id = tr.id.replace('fila-', '');
+      if (!idsServidor.has(id)) tr.remove();
+    });
+  }
 }
 
 

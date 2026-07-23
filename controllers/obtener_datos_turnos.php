@@ -8,7 +8,7 @@ $database = new Database();
 $db = $database->getConnection();
 
 $tipo_solicitud = isset($_GET['tipo_solicitud']) ? intval($_GET['tipo_solicitud']) : 0;
-$since = isset($_GET['since']) ? intval($_GET['since']) : 0;
+$since_raw = $_GET['since'] ?? '';
 
 if ($tipo_solicitud === 0) {
     echo json_encode(array("error" => "Tipo de solicitud no proporcionado"));
@@ -18,8 +18,22 @@ if ($tipo_solicitud === 0) {
 date_default_timezone_set('America/Bogota');
 $fecha_actual = date('Y-m-d');
 
-// Convertir timestamp JS (milisegundos) a formato MySQL
-$since_mysql = $since > 0 ? date('Y-m-d H:i:s', $since / 1000) : null;
+/* Marca de agua para el polling incremental. El cliente reenvía el valor
+   'ahora' que este mismo endpoint le devolvió (reloj del SERVIDOR), lo que
+   elimina los problemas de relojes desajustados o zonas horarias que hacían
+   perder pedidos nuevos. Se acepta también el formato viejo en milisegundos
+   por compatibilidad con pestañas abiertas con la versión anterior. */
+if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $since_raw)) {
+    $since_mysql = $since_raw;
+} elseif (ctype_digit($since_raw) && (int) $since_raw > 0) {
+    $since_mysql = date('Y-m-d H:i:s', ((int) $since_raw) / 1000);
+} else {
+    $since_mysql = null; // sincronización completa
+}
+
+/* La marca de agua se toma ANTES de consultar, para no perder filas que
+   cambien mientras se arma la respuesta. */
+$ahora_servidor = $db->query("SELECT NOW()")->fetchColumn();
 
 /* El dashboard pide tipo_solicitud=51 (restaurante), pero la app de
    mesas registra sus pedidos con tipo 52. Se agrupan para que los
@@ -81,5 +95,9 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     ];
 }
 
-echo json_encode(["turnos" => $turnos_arr]);
+echo json_encode([
+    "turnos" => $turnos_arr,
+    "ahora"  => $ahora_servidor,
+    "full"   => $since_mysql === null
+]);
 ?>
