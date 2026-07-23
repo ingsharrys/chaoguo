@@ -59,7 +59,9 @@ class Pedido {
         $this->detalle        = htmlspecialchars(strip_tags($this->detalle));
         $this->tipo_producto  = htmlspecialchars(strip_tags($this->tipo_producto));
         $this->mesa           = htmlspecialchars(strip_tags($this->mesa));
-        $this->mesero         = htmlspecialchars(strip_tags($this->mesero));
+        /* mesero es columna numérica: cadena vacía o null deben guardarse
+           como NULL, nunca como '' (el modo estricto de MySQL lo rechaza) */
+        $this->mesero         = ($this->mesero === '' || $this->mesero === null) ? null : (int) $this->mesero;
         $this->id_cliente     = htmlspecialchars(strip_tags($this->id_cliente ?: 1));
         $this->producto       = htmlspecialchars(strip_tags($this->producto ?? ''));
         $this->prefijos       = htmlspecialchars(strip_tags($this->prefijos ?? ''));

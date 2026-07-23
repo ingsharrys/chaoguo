@@ -79,6 +79,9 @@ try {
        el administrador. Por eso aquí se llenan todas.               */
     $estado     = !empty($data->estado)     ? $data->estado     : 'nuevo';
     $id_cliente = !empty($data->id_cliente) ? $data->id_cliente : 1;
+    /* La app envía id_mesero como cadena vacía cuando no se selecciona
+       mesero; la columna es numérica y el modo estricto rechaza ''. */
+    $id_mesero  = !empty($data->id_mesero)  ? (int) $data->id_mesero : null;
 
     $stmtProd = $db->prepare("SELECT nombre, prefijo FROM productos WHERE id_pro = :id LIMIT 1");
 
@@ -114,7 +117,7 @@ try {
             ':det'       => $p->detalle ?? '',
             ':tipo_prod' => $p->tipo_prod ?? '',
             ':mesa'      => $data->numeroMesa,
-            ':mesero'    => $data->id_mesero ?? null,
+            ':mesero'    => $id_mesero,
             ':estado'    => $estado
         ]);
     }
