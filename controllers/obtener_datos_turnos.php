@@ -35,11 +35,13 @@ if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $since_raw)) {
    cambien mientras se arma la respuesta. */
 $ahora_servidor = $db->query("SELECT NOW()")->fetchColumn();
 
-/* El dashboard pide tipo_solicitud=51 (restaurante), pero la app de
-   mesas registra sus pedidos con tipo 52. Se agrupan para que los
-   pedidos de la app aparezcan en el panel con sus botones de
-   Imprimir, Caja y Editar. */
-$tipos_sql = ($tipo_solicitud === 51) ? '51,52' : (string) $tipo_solicitud;
+/* ENRUTAMIENTO POR TIPO DE SOLICITUD (regla del negocio):
+   - 52 pedidos de MESA (app)  → SOLO en la sección de mesas, NUNCA aquí
+   - 51 para llevar            → tabla de turnos del dashboard
+   - 50 domicilios             → whatsapp.php
+   - 53 recoger                → llamadas.php
+   Cada vista recibe exclusivamente su tipo. */
+$tipos_sql = (string) $tipo_solicitud;
 
 /* Se muestran los turnos de HOY y, además, los de días anteriores que
    sigan asociados a una mesa abierta y sin pagar. Sin esta condición,
