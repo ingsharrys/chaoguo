@@ -318,16 +318,18 @@ function imprimirTicket(numeroPedido, metodoPago) {
     console.log("✅ Contenido a imprimir:\n", contenidoTicket.join(""));
 
     // 🔹 **Conectar a QZ Tray e imprimir**
-    qz.websocket.connect().then(() => {
-        return qz.printers.find("POS-80"); // Nombre de la impresora POS
+    // Reutiliza la conexión activa (reconectar hacía fallar la 2a impresión)
+    // y si no existe la impresora "POS-80" usa la predeterminada del equipo.
+    (qz.websocket.isActive() ? Promise.resolve() : qz.websocket.connect()).then(() => {
+        return qz.printers.find("POS-80").catch(() => qz.printers.getDefault());
     }).then(printer => {
         let config = qz.configs.create(printer, { encoding: "ISO-8859-1" });
         return qz.print(config, [{ type: 'raw', format: 'plain', data: contenidoTicket.join("") }]);
     }).then(() => {
         console.log("✅ Ticket impreso correctamente.");
-        return qz.websocket.disconnect();
     }).catch(err => {
         console.error("❌ Error al imprimir con QZ Tray:", err);
+        alert("No se pudo imprimir el recibo: " + (err.message || err));
     });
 }
 
