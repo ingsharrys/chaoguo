@@ -92,7 +92,8 @@
     t += linea();
     (d.productos || []).forEach(p => {
       const tipoProd = (p.tipo_producto && p.tipo_producto !== 'Único') ? ` (${p.tipo_producto})` : '';
-      t += envolver(`${p.cantidad} x ${p.producto || 'Producto'}${tipoProd}`);
+      const prefijo  = (p.prefijos && p.prefijos.trim()) ? `[${p.prefijos.trim()}] ` : '';
+      t += NEGRITA + envolver(`${p.cantidad} x ${prefijo}${p.producto || 'Producto'}${tipoProd}`) + FIN_NEG;
       if (p.detalle && p.detalle.trim() && p.detalle !== 'Sin detalle') {
         t += envolver(`> ${p.detalle.trim()}`, '    ');
       }

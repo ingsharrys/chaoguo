@@ -39,14 +39,20 @@ try {
 
     if (!$cab && !$base) throw new Exception("Pedido #$np no encontrado");
 
-    /* ── Productos con precio (LEFT JOIN: nunca se pierde una línea) ── */
+    /* ── Productos con precio (LEFT JOIN: nunca se pierde una línea) ──
+       El nombre sale de pedidos.producto y, si esa columna está vacía
+       (pedidos guardados por rutas antiguas), se toma directamente del
+       catálogo de productos por su código: el ticket SIEMPRE lleva nombre. */
     $stmt = $db->prepare("
-        SELECT p.producto, p.prefijos, p.tipo_producto, p.cantidad, p.detalle,
+        SELECT COALESCE(NULLIF(TRIM(p.producto), ''), cat.nombre, 'Producto') AS producto,
+               COALESCE(NULLIF(TRIM(p.prefijos), ''), cat.prefijo, '')        AS prefijos,
+               p.tipo_producto, p.cantidad, p.detalle,
                COALESCE(pr.precio, 0)              AS precio,
                p.cantidad * COALESCE(pr.precio, 0) AS subtotal
         FROM pedidos p
-        LEFT JOIN precios pr ON pr.idproduc = p.id_pro
-                            AND pr.tipo_prod = p.tipo_producto
+        LEFT JOIN productos cat ON cat.id_pro = p.id_pro
+        LEFT JOIN precios pr    ON pr.idproduc = p.id_pro
+                               AND pr.tipo_prod = p.tipo_producto
         WHERE p.numero_pedido = :np
         ORDER BY p.id_pedido");
     $stmt->execute([':np' => $np]);

@@ -23,7 +23,7 @@
 <script type="text/javascript" src="/qz-tray.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsrsasign@10.5.0/lib/jsrsasign-all-min.js"></script>
 <script src="../public/js/script.js?cache=DFRG4434"></script>
-<script src="../public/js/impresion.js?cache=v2"></script>
+<script src="../public/js/impresion.js?cache=v3"></script>
 <!--<script src="../public/js/domicilios.js?cache=ttugj"></script>-->
 
 
