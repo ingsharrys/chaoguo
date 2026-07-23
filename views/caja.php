@@ -340,4 +340,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'], $_PO
     </script>
 </body>
 </html>
-<script src="../public/js/impresion.js?cache=v3"></script>
+<script src="../public/js/impresion.js?cache=v4"></script>

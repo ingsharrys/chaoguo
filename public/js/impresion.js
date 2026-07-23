@@ -131,7 +131,9 @@
       .then(impresora => impresora || qz.printers.find().then(l => Array.isArray(l) ? l[0] : l))
       .then(impresora => {
         if (!impresora) throw new Error('No hay impresoras disponibles en este computador.');
-        const config = qz.configs.create(impresora);
+        /* ISO-8859-1: para que tildes y Ñ salgan bien en la térmica
+           (misma codificación que usaba el sistema anterior) */
+        const config = qz.configs.create(impresora, { encoding: 'ISO-8859-1' });
         return qz.print(config, [{ type: 'raw', format: 'plain', data: contenido }]);
       });
   }
