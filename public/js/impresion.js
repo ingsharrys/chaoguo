@@ -11,6 +11,7 @@
    ============================================================ */
 
 (function () {
+  console.log('🖨 impresion.js v2 CARGADO — impresión con datos de la base de datos activa');
   const ANCHO = 42;                       // columnas impresora 80mm
 
   /* ---------- Conexión robusta a QZ Tray ---------- */

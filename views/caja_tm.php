@@ -489,4 +489,4 @@ function calcularTotalConDescuento() {
 }
 </script>
 <script src="../public/js/caja_tm.js?cache=FRGH"></script>
-<script src="../public/js/impresion.js?cache=v1"></script>
+<script src="../public/js/impresion.js?cache=v2"></script>
