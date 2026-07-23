@@ -275,3 +275,4 @@ function printInvoice(numeroPedido) {
     // Verificar la selecci��n al cargar la p��gina
     verificarSeleccion();
 </script>
+<script src="../public/js/impresion.js?cache=v1"></script>

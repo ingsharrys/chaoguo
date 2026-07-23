@@ -150,6 +150,21 @@
       });
   };
 
+  /* ---------- Reemplazar TODAS las funciones viejas de impresión ----------
+     Las versiones anteriores leían el HTML de la pantalla (fallaban si la
+     fila o el modal no estaban pintados) o intentaban usar RawBT desde el
+     navegador del PC (RawBT solo existe en Android). Todas imprimen ahora
+     con los datos completos de la base de datos. */
+  window.printInvoicemesa = window.printInvoicepc;   // modal de mesas
+  window.printInvoice     = window.printInvoicepc;   // vista de domicilios
+
+  /* Abrir el cajón de dinero sin imprimir ticket (botón de caja) */
+  window.abrirCajon = function () {
+    imprimirContenido('\x1B\x70\x00\x19\xFA')
+      .then(() => console.log('✅ Cajón abierto.'))
+      .catch(err => alert('No se pudo abrir el cajón: ' + (err.message || err)));
+  };
+
   /* Conexión robusta también para el resto de scripts que la usan */
   window.ensureConnection = qzConexion;
 })();

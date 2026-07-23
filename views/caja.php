@@ -159,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'], $_PO
         <?php if ($pago_existente): ?>
             <button href="" class="btn btn-success">PAGADO</button>
             <a href="../public/index.php?page=whatsapp.php" class="btn btn-warning">Volver</a>
-            <button type="button" class="btn btn-primary" onclick="printInvoice(<?php echo $numero_pedido; ?>)">Abrir Caja</button>
+            <button type="button" class="btn btn-primary" onclick="abrirCajon()">Abrir Caja</button>
         <?php else: ?>
             <form action="" method="POST">
                 <input type="hidden" name="numero_pedido" value="<?php echo htmlspecialchars($numero_pedido); ?>">
@@ -340,3 +340,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'], $_PO
     </script>
 </body>
 </html>
+<script src="../public/js/impresion.js?cache=v1"></script>
