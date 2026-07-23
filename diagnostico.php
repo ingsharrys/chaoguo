@@ -103,10 +103,17 @@ if (strpos($auth, 'RECAPTCHA_ENABLED') === false) {
 echo "[8] Logs de errores encontrados...\n";
 foreach ([__DIR__ . '/error_log', __DIR__ . '/views/error_log', __DIR__ . '/controllers/error_log'] as $log) {
     if (file_exists($log)) {
-        echo "    --- $log (ultimas 5 lineas) ---\n";
-        $lineas = file($log);
-        foreach (array_slice($lineas, -5) as $l) echo "    " . $l;
+        $mb = round(filesize($log) / 1048576, 1);
+        echo "    --- $log ({$mb} MB, ultimas lineas) ---\n";
+        /* leer solo el final del archivo para no agotar la memoria */
+        $fh = fopen($log, 'r');
+        fseek($fh, max(0, filesize($log) - 2048));
+        $cola = stream_get_contents($fh);
+        fclose($fh);
+        $lineas = explode("\n", trim($cola));
+        foreach (array_slice($lineas, -5) as $l) echo "    $l\n";
         echo "\n";
+        if ($mb > 50) echo "    AVISO: este log pesa {$mb} MB - conviene borrarlo con: rm $log\n\n";
     }
 }
 echo "\n==============================================\n";

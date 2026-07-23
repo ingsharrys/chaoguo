@@ -111,16 +111,19 @@ SET valor = (SELECT COALESCE(MAX(numero_pedido), 0) FROM pedidos)
 WHERE nombre = 'num_pedido'
   AND valor < (SELECT COALESCE(MAX(numero_pedido), 0) FROM pedidos);
 
--- ============================================================================
--- 10. VERIFICACIÓN FINAL (ejecutar aparte, después de lo anterior):
---
---     SHOW COLUMNS FROM pedidos LIKE 'id_pedido';
---
---     En la columna "Extra" debe decir 'auto_increment'. Si NO lo dice,
---     ejecuta también esta línea:
---
---     ALTER TABLE pedidos MODIFY id_pedido INT NOT NULL AUTO_INCREMENT,
---       ADD PRIMARY KEY (id_pedido);
---
---     (Si da error "Multiple primary key defined", ya estaba bien: ignóralo.)
--- ============================================================================
+-- ----------------------------------------------------------------------------
+-- 10. Restaurar claves primarias y auto-incrementos.
+--     La importación de la base de datos llegó SIN claves primarias ni
+--     auto_increment, lo que rompe todos los INSERT (pedidos, caja, etc.).
+--     Si alguna tabla ya la tiene, dará "Multiple primary key defined":
+--     es inofensivo, continúa con la siguiente.
+-- ----------------------------------------------------------------------------
+ALTER TABLE pedidos     MODIFY id_pedido INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_pedido);
+ALTER TABLE caja        MODIFY id_c      INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_c);
+ALTER TABLE clientes    MODIFY id        INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id);
+ALTER TABLE comentarios MODIFY idc       INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (idc);
+ALTER TABLE mesas       MODIFY idm       INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (idm);
+ALTER TABLE meseros     MODIFY id_mese   INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_mese);
+ALTER TABLE precios     MODIFY idpre     INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (idpre);
+ALTER TABLE productos   MODIFY id_pro    INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_pro);
+ALTER TABLE domicilios  MODIFY id_d      INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_d);
