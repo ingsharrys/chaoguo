@@ -128,15 +128,21 @@ try {
     $db->prepare("INSERT INTO turnero (id_pedido, turno, fecha, tipo_solicitud, estado, id_cliente)
                   VALUES (:np, 999, NOW(), 52, 'nuevo', 1)")->execute([':np' => $np]);
 
-    $prod = $db->query("SELECT id_pro, nombre, prefijo FROM productos LIMIT 1")->fetch(PDO::FETCH_ASSOC);
-    if (!$prod) throw new Exception('la tabla productos esta vacia');
+    /* Producto REAL con su tipo REAL de la tabla precios: la tabla pedidos
+       tiene una llave foránea (id_pro, tipo_producto) -> precios, así que
+       la prueba debe usar una combinación que exista de verdad. */
+    $prod = $db->query("SELECT p.id_pro, p.nombre, p.prefijo, pr.tipo_prod
+                        FROM productos p
+                        JOIN precios pr ON pr.idproduc = p.id_pro
+                        LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+    if (!$prod) throw new Exception('no hay productos con precio registrado');
 
     $db->prepare("INSERT INTO pedidos
         (id_cliente, id_pro, producto, prefijos, cantidad, numero_pedido,
          tipo_solicitud, detalle, tipo_producto, mesa, mesero, estado, estado_boton, fecha)
-        VALUES (1, :id_pro, :producto, :prefijos, 1, :np, 52, '', 'PRUEBA', 1, NULL, 'nuevo', 'nuevo', NOW())")
+        VALUES (1, :id_pro, :producto, :prefijos, 1, :np, 52, '', :tipo, 1, NULL, 'nuevo', 'nuevo', NOW())")
        ->execute([':id_pro' => $prod['id_pro'], ':producto' => $prod['nombre'],
-                  ':prefijos' => $prod['prefijo'], ':np' => $np]);
+                  ':prefijos' => $prod['prefijo'], ':np' => $np, ':tipo' => $prod['tipo_prod']]);
 
     $db->rollBack();
     echo "    OK - EL REGISTRO DE PEDIDOS FUNCIONA (pedido de prueba #$np creado y deshecho).\n\n";
