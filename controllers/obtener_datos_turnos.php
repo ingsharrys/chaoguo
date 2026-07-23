@@ -21,6 +21,12 @@ $fecha_actual = date('Y-m-d');
 // Convertir timestamp JS (milisegundos) a formato MySQL
 $since_mysql = $since > 0 ? date('Y-m-d H:i:s', $since / 1000) : null;
 
+/* El dashboard pide tipo_solicitud=51 (restaurante), pero la app de
+   mesas registra sus pedidos con tipo 52. Se agrupan para que los
+   pedidos de la app aparezcan en el panel con sus botones de
+   Imprimir, Caja y Editar. */
+$tipos_sql = ($tipo_solicitud === 51) ? '51,52' : (string) $tipo_solicitud;
+
 /* Se muestran los turnos de HOY y, además, los de días anteriores que
    sigan asociados a una mesa abierta y sin pagar. Sin esta condición,
    una mesa que quedó abierta de un día para otro desaparecía del panel
@@ -34,7 +40,7 @@ $query = "
            (SELECT COUNT(*) FROM domicilios WHERE id_pedido = t.id_pedido) AS tiene_precio
     FROM turnero t
     LEFT JOIN clientes c ON t.id_cliente = c.id
-    WHERE t.tipo_solicitud = :tipo_solicitud
+    WHERE t.tipo_solicitud IN ($tipos_sql)
     AND (
         DATE(t.fecha) = :fecha_actual
         OR (
@@ -48,7 +54,6 @@ if ($since_mysql) {
 }
 
 $stmt = $db->prepare($query);
-$stmt->bindParam(':tipo_solicitud', $tipo_solicitud, PDO::PARAM_INT);
 $stmt->bindParam(':fecha_actual', $fecha_actual, PDO::PARAM_STR);
 if ($since_mysql) {
     $stmt->bindParam(':since', $since_mysql, PDO::PARAM_STR);
