@@ -148,6 +148,9 @@ try {
 } catch (Exception $e) {
     if ($db->inTransaction()) $db->rollBack();
     error_log('[post_pedido] '.$e->getMessage());
-    http_response_code($e->getCode() ?: 500);
+    /* PDOException::getCode() puede devolver un SQLSTATE tipo '42S22'
+       (string); http_response_code solo acepta enteros HTTP válidos. */
+    $codigo = (int) $e->getCode();
+    http_response_code(($codigo >= 400 && $codigo < 600) ? $codigo : 500);
     echo json_encode(['success'=>false,'error'=>$e->getMessage()]);
 }
