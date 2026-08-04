@@ -103,6 +103,9 @@ CREATE INDEX idx_caja_pedido        ON caja (id_pedidoc);
 CREATE INDEX idx_comentarios_pedido ON comentarios (id_pedido);
 CREATE INDEX idx_mesas_pedido       ON mesas (id_pedido);
 CREATE INDEX idx_turnero_tipo_upd   ON turnero (tipo_solicitud, updated_at);
+CREATE INDEX idx_caja_fecha_cajero  ON caja (fecha_caja, id_cajero);
+CREATE INDEX idx_abono_credito_fec  ON abono_credito (fecha_abono);
+CREATE INDEX idx_gastos_fecha       ON gastos (fecha);
 
 -- ----------------------------------------------------------------------------
 -- 9. Sincronizar el consecutivo de pedidos con el máximo real.

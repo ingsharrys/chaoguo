@@ -58,7 +58,7 @@ $query = "
     LEFT JOIN clientes c ON t.id_cliente = c.id
     WHERE t.tipo_solicitud IN ($tipos_sql)
     AND (
-        DATE(t.fecha) = :fecha_actual
+        (t.fecha >= :fecha_ini AND t.fecha < :fecha_fin)
         OR (
             t.id_pedido IN (SELECT m.id_pedido FROM mesas m WHERE m.id_pedido IS NOT NULL)
             AND NOT EXISTS (SELECT 1 FROM caja cj WHERE cj.id_pedidoc = t.id_pedido)
@@ -69,8 +69,14 @@ if ($since_mysql) {
     $query .= " AND t.updated_at > :since";
 }
 
+/* Rango de fechas en lugar de DATE(t.fecha)=hoy: permite usar el índice
+   de turnero y no recorrer el histórico completo en cada sondeo. */
+$fecha_ini = $fecha_actual . ' 00:00:00';
+$fecha_fin = date('Y-m-d', strtotime($fecha_actual . ' +1 day')) . ' 00:00:00';
+
 $stmt = $db->prepare($query);
-$stmt->bindParam(':fecha_actual', $fecha_actual, PDO::PARAM_STR);
+$stmt->bindParam(':fecha_ini', $fecha_ini, PDO::PARAM_STR);
+$stmt->bindParam(':fecha_fin', $fecha_fin, PDO::PARAM_STR);
 if ($since_mysql) {
     $stmt->bindParam(':since', $since_mysql, PDO::PARAM_STR);
 }

@@ -1,8 +1,7 @@
 <?php
-// Mostrar todos los errores de PHP
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Endpoint caliente: lo consulta cada terminal abierta cada 15 segundos.
+// Los errores van al log, no a la salida (romperían el JSON).
+ini_set('display_errors', 0);
 
 // Incluir el archivo de configuración de la base de datos
 require_once '../config/database.php';
@@ -106,14 +105,16 @@ if (isset($_GET['numero_pedido'])) {
 }
 
 // Obtener datos de la tabla 'turnero'
-// Solo turnos de hoy y que NO estén entregados + pagados
+// Solo turnos de hoy y que NO estén entregados + pagados.
+// El rango de fechas (en lugar de DATE(t.fecha)=CURDATE()) permite usar
+// el índice de turnero: evita recorrer todo el histórico en cada sondeo.
 $query_turnero = "
     SELECT  t.id_pedido,
             t.turno,
             t.estado
     FROM    turnero t
     LEFT JOIN caja c           ON c.id_pedidoc = t.id_pedido
-    WHERE   DATE(t.fecha) = CURDATE()
+    WHERE   t.fecha >= CURDATE() AND t.fecha < CURDATE() + INTERVAL 1 DAY
       AND  NOT (t.estado = 'entregado' AND c.id_pedidoc IS NOT NULL)
 ";
 
@@ -122,6 +123,10 @@ $stmt_turnero->execute();
 $turnos = $stmt_turnero->fetchAll(PDO::FETCH_ASSOC);
 
 // Obtener datos de la tabla 'mesas'
+// Se devuelven TODAS las mesas siempre: el filtro anterior por fecha
+// ocultaba del panel las mesas ocupadas de días anteriores (quedaban
+// invisibles hasta refrescar o pagar). Una mesa ocupada sigue visible
+// hasta que se libere, sin importar cuántos días pasen.
 $query_mesas = "
     SELECT
         m.numero_mesa,
@@ -133,14 +138,6 @@ $query_mesas = "
             THEN 1 ELSE 0
         END                                                           AS pagado
     FROM mesas m
-    
-    WHERE (m.id_pedido IS NULL)
-       OR (DATE(m.fecha) = CURDATE())
-
-    
-      -- AND NOT (m.estado = 'entregado'
-      --           AND EXISTS (SELECT 1 FROM caja WHERE id_pedidoc = m.id_pedido))
-
     ORDER BY m.numero_mesa
 ";
 

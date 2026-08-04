@@ -17,14 +17,14 @@ date_default_timezone_set('America/Bogota');
 $fecha_actual = date('Y-m-d');
 
 // ----------------------------------------------------------------------
-// 1) Calcular los abonos del d¨ªa por m¨¦todo de pago, sin importarlos pedido a pedido
+// 1) Calcular los abonos del dï¿½ï¿½a por mï¿½ï¿½todo de pago, sin importarlos pedido a pedido
 // ----------------------------------------------------------------------
 $abonosEfectivoHoy = 0;
 $abonosTarjetaHoy  = 0;
 $abonosTransferHoy = 0;
 
 /**
- * Usamos SUM + CASE para agrupar por m¨¦todo:
+ * Usamos SUM + CASE para agrupar por mï¿½ï¿½todo:
  * - m_pagocr='efectivo' -> suma a abonos_efectivo
  * - m_pagocr='tarjeta' -> suma a abonos_tarjeta
  * - m_pagocr='transferencia' -> suma a abonos_transfer
@@ -50,7 +50,7 @@ if ($resultAbonosMetodo) {
 }
 
 // ----------------------------------------------------------------------
-// 2) Obtener gastos y n¨®mina
+// 2) Obtener gastos y nï¿½ï¿½mina
 // ----------------------------------------------------------------------
 $query = "SELECT SUM(monto) AS total_gastos FROM gastos WHERE fecha = CURDATE()";
 $stmt  = $conn->prepare($query);
@@ -58,7 +58,7 @@ $stmt->execute();
 $result       = $stmt->fetch(PDO::FETCH_ASSOC);
 $total_gastos = $result['total_gastos'] ?? 0;
 
-// Obtener gastos de n¨®mina
+// Obtener gastos de nï¿½ï¿½mina
 $query_abonos = "SELECT SUM(cantidad) AS total_nomina FROM abono_nomina WHERE DATE(fecha) = :fecha_actual";
 $stmt_abonos  = $conn->prepare($query_abonos);
 $stmt_abonos->bindParam(':fecha_actual', $fecha_actual);
@@ -66,12 +66,14 @@ $stmt_abonos->execute();
 $total_nomina = $stmt_abonos->fetchColumn() ?: 0;
 
 // ----------------------------------------------------------------------
-// 3) Consultar caja (ingresos del d¨ªa) por fecha_caja y cajero
+// 3) Consultar caja (ingresos del dï¿½ï¿½a) por fecha_caja y cajero
 // ----------------------------------------------------------------------
+/* Solo las columnas necesarias y comparaciÃ³n directa (fecha_caja es DATE):
+   la consulta corre en CADA carga de pÃ¡gina del panel y asÃ­ usa Ã­ndice. */
 $query = "
-    SELECT *
+    SELECT c.costo, c.efectivo, c.m_pago
     FROM caja c
-    WHERE DATE(c.fecha_caja) = :fecha_actual
+    WHERE c.fecha_caja = :fecha_actual
       AND c.id_cajero = :cajero
 ";
 $stmt = $conn->prepare($query);
@@ -86,9 +88,9 @@ $total_tarjeta       = 0;
 $total_transferencia = 0;
 
 // ----------------------------------------------------------------------
-// 4) Recorrer cada registro de caja y sumar seg¨²n m_pago
+// 4) Recorrer cada registro de caja y sumar segï¿½ï¿½n m_pago
 //    (Ya no es necesario buscar abonos en el case 'credito' porque
-//     los abonos del d¨ªa ya los sumaremos abajo.)
+//     los abonos del dï¿½ï¿½a ya los sumaremos abajo.)
 // ----------------------------------------------------------------------
 foreach ($registros as $registro) {
     $costo    = floatval($registro['costo']);
@@ -124,7 +126,7 @@ foreach ($registros as $registro) {
              * Si deseas, puedes sumar $costo o no, dependiendo de tu flujo.
              * Normalmente, "credito" no se cuenta como ingreso en caja
              * hasta que abonen.
-             * Por ahora, no lo sumamos aqu¨ª,
+             * Por ahora, no lo sumamos aquï¿½ï¿½,
              * ya que se refleja en los abonos que se calculan aparte.
              */
             break;
@@ -132,12 +134,12 @@ foreach ($registros as $registro) {
 }
 
 // ----------------------------------------------------------------------
-// 5) Sumar la n¨®mina al efectivo (si deseas)
+// 5) Sumar la nï¿½ï¿½mina al efectivo (si deseas)
 // ----------------------------------------------------------------------
 $total_efectivo += $total_nomina;
 
 // ----------------------------------------------------------------------
-// 6) Sumar los abonos del d¨ªa a los totales
+// 6) Sumar los abonos del dï¿½ï¿½a a los totales
 //    (efectivo, tarjeta, transferencia)
 // ----------------------------------------------------------------------
 $total_crefect = 0; // Se inicializa para evitar error
@@ -148,7 +150,7 @@ $total_transferencia += $abonosTransferHoy;
 
 
 // ----------------------------------------------------------------------
-// 7) Calcular diferencia (Efectivo - Gastos), si lo deseas as¨ª
+// 7) Calcular diferencia (Efectivo - Gastos), si lo deseas asï¿½ï¿½
 // ----------------------------------------------------------------------
 $diferencia = $total_efectivo - $total_gastos;
 
