@@ -20,8 +20,32 @@ require_once __DIR__ . '/config/database.php';
 $db = (new Database())->getConnection();
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+header('Content-Type: text/plain; charset=utf-8');
+
+echo "REPARADOR UNIVERSAL v3 (triggers + vistas + procedimientos + eventos)\n";
 echo "Base de datos: " . $db->query("SELECT DATABASE()")->fetchColumn() . "\n";
 echo "Usuario actual: " . $db->query("SELECT CURRENT_USER()")->fetchColumn() . "\n\n";
+
+/* ═══════════ 0. RADIOGRAFÍA: todos los definers de la base ═══════════ */
+echo "[0] ¿Quién firma cada objeto de la base de datos?\n";
+$radiografia = $db->query("
+    SELECT 'TRIGGER' AS tipo, TRIGGER_NAME AS nombre, DEFINER AS definer
+      FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA = DATABASE()
+    UNION ALL
+    SELECT 'VISTA', TABLE_NAME, DEFINER
+      FROM information_schema.VIEWS WHERE TABLE_SCHEMA = DATABASE()
+    UNION ALL
+    SELECT ROUTINE_TYPE, ROUTINE_NAME, DEFINER
+      FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE()
+    UNION ALL
+    SELECT 'EVENTO', EVENT_NAME, DEFINER
+      FROM information_schema.EVENTS WHERE EVENT_SCHEMA = DATABASE()
+")->fetchAll(PDO::FETCH_ASSOC);
+if (!$radiografia) echo "    (ningún objeto con definer)\n";
+foreach ($radiografia as $obj) {
+    echo "    {$obj['tipo']}  {$obj['nombre']}  ->  {$obj['definer']}\n";
+}
+echo "\n";
 
 /* ═══════════ 1. TRIGGERS: regenerar TODOS con el usuario actual ═══════════ */
 echo "[1] TRIGGERS\n";
@@ -88,9 +112,12 @@ foreach ($db->query("SHOW TRIGGERS")->fetchAll(PDO::FETCH_ASSOC) as $t) {
 /* ═══════════ 5. Prueba real de pago (INSERT en caja con ROLLBACK) ═══════════ */
 echo "\n[5] Prueba real de pago (se deshace al final, no deja rastro)...\n";
 try {
+    /* id de pedido ficticio que no exista en caja (evita el choque con la
+       restricción unique_idpedidoc que dio falso positivo en la v1) */
+    $idPrueba = 900000000 + rand(1, 99999);
     $db->beginTransaction();
     $db->prepare("INSERT INTO caja (id_pedidoc, costo, m_pago, descuento, efectivo, cajero, fecha_caja, id_cajero)
-                  VALUES (0, 0, 'PRUEBA', 0, 0, 'diagnostico', CURDATE(), 0)")->execute();
+                  VALUES (:id, 0, 'PRUEBA', 0, 0, 'diagnostico', CURDATE(), 0)")->execute([':id' => $idPrueba]);
     $db->rollBack();
     echo "    OK - LOS PAGOS EN CAJA FUNCIONAN.\n";
 } catch (Throwable $e) {
