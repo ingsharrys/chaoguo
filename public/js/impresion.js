@@ -11,7 +11,7 @@
    ============================================================ */
 
 (function () {
-  console.log('🖨 impresion.js v2 CARGADO — impresión con datos de la base de datos activa');
+  console.log('🖨 impresion.js v4 CARGADO — impresión con datos de la base de datos activa');
   const ANCHO = 42;                       // columnas impresora 80mm
 
   /* ---------- Conexión robusta a QZ Tray ---------- */
@@ -21,10 +21,17 @@
       return Promise.reject('qz no definido');
     }
     if (qz.websocket.isActive()) return Promise.resolve();
-    return qz.websocket.connect({ retries: 1, delay: 1 }).catch(err => {
-      alert('No se pudo conectar a QZ Tray. Verifica que el programa esté abierto en este computador.');
-      throw err;
-    });
+    /* Mismo modo de conexión del sistema anterior (local sin certificado),
+       que es el que funciona en los equipos del restaurante */
+    return qz.websocket.connect({ host: 'localhost', secure: false, retries: 2, delay: 1 })
+      .catch(err => {
+        alert('No se pudo conectar a QZ Tray.\n\n' +
+              'Revisa en este computador:\n' +
+              '1. Que el icono de QZ Tray (la Q verde) aparezca junto al reloj de Windows.\n' +
+              '2. Si no aparece, abre QZ Tray desde el menú Inicio y espera unos segundos.\n' +
+              '3. Vuelve a intentar la impresión.');
+        throw err;
+      });
   }
 
   /* ---------- Utilidades de formato ---------- */
