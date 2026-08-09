@@ -319,9 +319,13 @@ function imprimirTicket(numeroPedido, metodoPago) {
 
     // 🔹 **Conectar a QZ Tray e imprimir**
     // Reutiliza la conexión activa (reconectar hacía fallar la 2a impresión)
-    // y si no existe la impresora "POS-80" usa la predeterminada del equipo.
-    (qz.websocket.isActive() ? Promise.resolve() : qz.websocket.connect()).then(() => {
-        return qz.printers.find("POS-80").catch(() => qz.printers.getDefault());
+    // Usa la impresora PREDETERMINADA del equipo (la misma que imprime los
+    // pedidos en el dashboard); "POS-80" queda solo como respaldo por si el
+    // equipo no tiene predeterminada. Antes era al revés y en equipos con
+    // una cola "POS-80" vieja fuera de linea el recibo era rechazado con
+    // "Printer is not accepting job".
+    (qz.websocket.isActive() ? Promise.resolve() : qz.websocket.connect({ host: 'localhost', secure: false })).then(() => {
+        return qz.printers.getDefault().catch(() => qz.printers.find("POS-80"));
     }).then(printer => {
         let config = qz.configs.create(printer, { encoding: "ISO-8859-1" });
         return qz.print(config, [{ type: 'raw', format: 'plain', data: contenidoTicket.join("") }]);
