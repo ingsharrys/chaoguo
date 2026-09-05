@@ -21,6 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+/* ─────────────  CRONÓMETRO DE DIAGNÓSTICO (temporal)  ────────────────
+   Escribe en post_pedido.log cuánto tarda cada etapa del pedido, para
+   localizar con exactitud dónde está la lentitud. Cuando el problema
+   quede resuelto se puede retirar sin afectar nada.                   */
+$T0 = microtime(true);
+$tPrev = $T0;
+$tiempos = [];
+$marca = function ($etapa) use (&$tPrev, &$tiempos) {
+    $ahora = microtime(true);
+    $tiempos[] = $etapa.'='.round(($ahora - $tPrev) * 1000).'ms';
+    $tPrev = $ahora;
+};
+
 /* ───────────────────────────  DEPENDENCIAS  ─────────────────────────── */
 require_once '../config/database.php';
 date_default_timezone_set('America/Bogota');
@@ -28,6 +41,7 @@ date_default_timezone_set('America/Bogota');
 /* ─────────────────────  CONEXIÓN Y TRANSACCIÓN  ─────────────────────── */
 $db = (new Database())->getConnection();
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$marca('conexion_bd');
 $db->beginTransaction();
 
 try {
@@ -47,6 +61,7 @@ try {
         WHERE nombre = 'num_pedido'
     ");
     $numero_pedido = (int)$db->lastInsertId();      // ← nuevo ID único
+    $marca('consecutivo');
 
     /* ─────────────────────  2. Generar número de turno  ───────────────
        Rango de fechas en lugar de DATE(fecha)=CURDATE(): DATE() impide
@@ -64,6 +79,7 @@ try {
     ");
     $stmtTurno->execute([':tipo'=>$data->tipo_solicitud]);
     $numero_turno = (int)$stmtTurno->fetchColumn();
+    $marca('turno_del_dia');
 
     /* ─────────────────────  3. Insertar en turnero  ─────────────────── */
     $db->prepare("
@@ -76,6 +92,7 @@ try {
         ':tipo'     =>$data->tipo_solicitud,
         ':cli'      =>$data->id_cliente ?? 1
     ]);
+    $marca('insert_turnero');
 
     /* ─────────────────────  4. Insertar cada producto  ────────────────
        IMPORTANTE: el panel admin lee los pedidos con
@@ -128,6 +145,7 @@ try {
             ':estado'    => $estado
         ]);
     }
+    $marca('insert_productos');
 
     /* ─────────────────────  5. Comentario opcional  ─────────────────── */
     if (!empty($data->comentario)) {
@@ -143,20 +161,28 @@ try {
         SET estado='nuevo', id_pedido=:p, fecha=NOW()
         WHERE numero_mesa=:m
     ")->execute([':p'=>$numero_pedido, ':m'=>$data->numeroMesa]);
+    $marca('comentario_y_mesa');
 
     /* ─────────────────────  7. Fin  ─────────────────────────────────── */
     $db->commit();
+    $marca('commit');
+
+    $total = round((microtime(true) - $T0) * 1000);
+    error_log("[TIEMPOS] pedido=$numero_pedido total={$total}ms ".implode(' ', $tiempos));
 
     http_response_code(201);
     echo json_encode([
         'success'       => true,
         'message'       => 'Pedido creado con éxito.',
         'numero_pedido' => $numero_pedido,
-        'turno'         => $numero_turno
+        'turno'         => $numero_turno,
+        'tiempo_ms'     => $total
     ]);
 
 } catch (Exception $e) {
     if ($db->inTransaction()) $db->rollBack();
+    $total = round((microtime(true) - $T0) * 1000);
+    error_log("[TIEMPOS-ERROR] total={$total}ms ".implode(' ', $tiempos));
     error_log('[post_pedido] '.$e->getMessage());
     /* PDOException::getCode() puede devolver un SQLSTATE tipo '42S22'
        (string); http_response_code solo acepta enteros HTTP válidos. */
