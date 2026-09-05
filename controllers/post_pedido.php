@@ -44,15 +44,18 @@ if (!empty($data->productos) && !empty($data->numeroMesa) && !empty($data->tipo_
     // ================================
     // Generar el próximo turno para la fecha actual y tipo_solicitud
     $fechaActual = date('Y-m-d'); // Solo la fecha, sin hora
+    // Rango de fechas (no DATE(fecha)=...) para usar idx_turnero_fecha_tipo
     $queryMaxTurno = "
         SELECT COALESCE(MAX(turno), 0) AS max_turno
         FROM turnero
-        WHERE DATE(fecha) = :fecha_actual
+        WHERE fecha >= :fecha_actual
+          AND fecha < :fecha_actual2 + INTERVAL 1 DAY
           AND tipo_solicitud = :tipo_solicitud
     ";
     $stmtMaxT = $db->prepare($queryMaxTurno);
     $stmtMaxT->execute([
         ':fecha_actual'   => $fechaActual,
+        ':fecha_actual2'  => $fechaActual,
         ':tipo_solicitud' => $data->tipo_solicitud
     ]);
     $rowMaxT     = $stmtMaxT->fetch(PDO::FETCH_ASSOC);

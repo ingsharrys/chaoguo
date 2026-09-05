@@ -11,10 +11,16 @@ function assignTurno($conn, $orderNumber, $tipo_solicitud, $clientId) {
     $fecha_actual = date('Y-m-d');
     $estadopedi = 'nuevo';
 
-    // Consultar el último turno asignado para el mismo tipo_solicitud en la fecha actual
-    $query = "SELECT MAX(turno) AS max_turno FROM turnero WHERE DATE(fecha) = :fecha_actual AND tipo_solicitud = :tipo_solicitud";
+    // Consultar el último turno asignado para el mismo tipo_solicitud en la fecha actual.
+    // Rango de fechas (no DATE(fecha)=...) para que use el índice idx_turnero_fecha_tipo
+    // y no escanee toda la tabla en cada pedido.
+    $query = "SELECT MAX(turno) AS max_turno FROM turnero
+              WHERE fecha >= :fecha_actual
+                AND fecha < :fecha_actual2 + INTERVAL 1 DAY
+                AND tipo_solicitud = :tipo_solicitud";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':fecha_actual', $fecha_actual); // Usar solo la fecha (Y-m-d)
+    $stmt->bindParam(':fecha_actual2', $fecha_actual);
     $stmt->bindParam(':tipo_solicitud', $tipo_solicitud);
     $stmt->execute();
     $max_turno = $stmt->fetchColumn();

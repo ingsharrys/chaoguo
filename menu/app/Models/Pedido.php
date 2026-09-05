@@ -116,11 +116,16 @@ class Pedido
     /*──────────────────────────  Helpers privados  ────────────────────*/
     private function assignTurno(int $orderNumber, int $tipoSol, int $clientId): int
     {
-        /* siguiente turno del día para ese tipo */
+        /* siguiente turno del día para ese tipo.
+           Rango de fechas (no DATE(fecha)=CURDATE()): así usa el índice
+           idx_turnero_fecha_tipo y el FOR UPDATE solo bloquea las filas
+           de hoy, no toda la tabla. */
         $st = $this->conn->prepare("
             SELECT COALESCE(MAX(turno),0)+1
             FROM turnero
-            WHERE DATE(fecha)=CURDATE() AND tipo_solicitud=:ts
+            WHERE fecha >= CURDATE()
+              AND fecha <  CURDATE() + INTERVAL 1 DAY
+              AND tipo_solicitud=:ts
             FOR UPDATE
         ");
         $st->execute([':ts'=>$tipoSol]);

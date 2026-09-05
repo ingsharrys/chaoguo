@@ -103,6 +103,12 @@ CREATE INDEX idx_caja_pedido        ON caja (id_pedidoc);
 CREATE INDEX idx_comentarios_pedido ON comentarios (id_pedido);
 CREATE INDEX idx_mesas_pedido       ON mesas (id_pedido);
 CREATE INDEX idx_turnero_tipo_upd   ON turnero (tipo_solicitud, updated_at);
+-- Críticos para la velocidad al crear pedidos (cálculo del turno del día).
+-- Se repiten aquí porque el CREATE TABLE de arriba solo aplica si turnero
+-- no existía; en servidores donde la tabla ya existía estos índices
+-- faltaban y cada pedido escaneaba (y bloqueaba) toda la tabla.
+CREATE INDEX idx_turnero_pedido     ON turnero (id_pedido);
+CREATE INDEX idx_turnero_fecha_tipo ON turnero (fecha, tipo_solicitud);
 CREATE INDEX idx_caja_fecha_cajero  ON caja (fecha_caja, id_cajero);
 CREATE INDEX idx_abono_credito_fec  ON abono_credito (fecha_abono);
 CREATE INDEX idx_gastos_fecha       ON gastos (fecha);

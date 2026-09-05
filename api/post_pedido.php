@@ -48,11 +48,18 @@ try {
     ");
     $numero_pedido = (int)$db->lastInsertId();      // ← nuevo ID único
 
-    /* ─────────────────────  2. Generar número de turno  ─────────────── */
+    /* ─────────────────────  2. Generar número de turno  ───────────────
+       Rango de fechas en lugar de DATE(fecha)=CURDATE(): DATE() impide
+       usar el índice y obliga a escanear (y con FOR UPDATE, a BLOQUEAR)
+       toda la tabla turnero en cada pedido — esa era la causa de la
+       lentitud. Con el rango usa idx_turnero_fecha_tipo y solo toca
+       las filas de hoy.                                               */
     $stmtTurno = $db->prepare("
         SELECT COALESCE(MAX(turno),0)+1
         FROM turnero
-        WHERE DATE(fecha)=CURDATE() AND tipo_solicitud=:tipo
+        WHERE fecha >= CURDATE()
+          AND fecha <  CURDATE() + INTERVAL 1 DAY
+          AND tipo_solicitud=:tipo
         FOR UPDATE
     ");
     $stmtTurno->execute([':tipo'=>$data->tipo_solicitud]);
