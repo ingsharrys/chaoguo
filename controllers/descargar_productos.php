@@ -41,7 +41,7 @@ if ($tipo && ($tipo == 'dia' || isset($tipoSolicitudMap[$tipo])) && $valor) {
                (p.cantidad * prp.precio) AS total, p.tipo_solicitud, p.mesero, c.m_pago, 
                c.efectivo, c.cajero, m.nombre_mese, cl.cliente AS nombre_cliente
         FROM pedidos p
-        JOIN productos pr ON p.producto = pr.nombre
+        JOIN productos pr ON p.id_pro = pr.id_pro
         JOIN precios prp ON pr.id_pro = prp.idproduc AND p.tipo_producto = prp.tipo_prod
         LEFT JOIN meseros m ON p.mesero = m.id_mese
         LEFT JOIN caja c ON p.numero_pedido = c.id_pedidoc
@@ -61,7 +61,7 @@ if ($tipo && ($tipo == 'dia' || isset($tipoSolicitudMap[$tipo])) && $valor) {
                c.efectivo, c.cajero, m.nombre_mese, cl.cliente AS nombre_cliente, 
                d.precio AS costo_domicilio, domi.repartidor AS nombre_repartidor
         FROM pedidos p
-        JOIN productos pr ON p.producto = pr.nombre
+        JOIN productos pr ON p.id_pro = pr.id_pro
         JOIN precios prp ON pr.id_pro = prp.idproduc AND p.tipo_producto = prp.tipo_prod
         LEFT JOIN meseros m ON p.mesero = m.id_mese
         LEFT JOIN caja c ON p.numero_pedido = c.id_pedidoc

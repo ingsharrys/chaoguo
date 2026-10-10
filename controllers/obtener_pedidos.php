@@ -21,9 +21,9 @@ $conn = $db->getConnection();
 function obtenerDetallesPedido($conn, $numero_pedido) {
     $detalle_query = "SELECT pr.nombre AS nombre_producto, p.cantidad, prp.precio AS precio_producto, p.detalle, p.tipo_producto, p.mesa
                       FROM pedidos p 
-                      JOIN productos pr ON p.producto = pr.nombre 
-                      JOIN precios prp ON pr.id_pro = prp.idproduc 
-                      WHERE p.numero_pedido = ? AND prp.tipo_prod = p.tipo_producto";
+                      JOIN productos pr ON p.id_pro = pr.id_pro 
+                      JOIN precios prp ON prp.idproduc = p.id_pro AND prp.tipo_prod = p.tipo_producto 
+                      WHERE p.numero_pedido = ?";
     $detalle_stmt = $conn->prepare($detalle_query);
     $detalle_stmt->bindValue(1, $numero_pedido, PDO::PARAM_STR);
     $detalle_stmt->execute();

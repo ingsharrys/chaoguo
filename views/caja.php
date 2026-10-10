@@ -13,13 +13,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'], $_PO
     $numero_pedido = $_POST['numero_pedido'];
     $costo_domicilio = $_POST['costo_domicilio'];
 
-    // Obtener los detalles del pedido y datos del cliente
-    $query_pedido = "SELECT pr.nombre AS nombre_producto, p.cantidad, prp.precio AS precio_producto, p.detalle, p.tipo_producto, c.cliente, c.celular, c.direccion 
-                     FROM pedidos p 
-                     JOIN productos pr ON p.producto = pr.nombre 
-                     JOIN precios prp ON pr.id_pro = prp.idproduc 
-                     JOIN clientes c ON p.id_cliente = c.id
-                     WHERE p.numero_pedido = ? AND prp.tipo_prod = p.tipo_producto";
+    // Obtener los detalles del pedido y datos del cliente.
+    // El cruce con productos es por id_pro (NO por nombre): cruzar por
+    // nombre mostraba OTRO producto cuando el pedido venía del menú
+    // digital (columna producto vacía) o cuando hay nombres repetidos.
+    // El cliente real está en turnero.id_cliente (los pedidos del menú
+    // guardan ahí al cliente); pedidos.id_cliente queda de respaldo.
+    $query_pedido = "SELECT pr.nombre AS nombre_producto, p.cantidad, prp.precio AS precio_producto, p.detalle, p.tipo_producto, c.cliente, c.celular, c.direccion
+                     FROM pedidos p
+                     JOIN productos pr ON p.id_pro = pr.id_pro
+                     JOIN precios prp ON prp.idproduc = p.id_pro AND prp.tipo_prod = p.tipo_producto
+                     LEFT JOIN turnero t ON t.id_pedido = p.numero_pedido
+                     LEFT JOIN clientes c ON c.id = COALESCE(t.id_cliente, p.id_cliente)
+                     WHERE p.numero_pedido = ?";
     $stmt_pedido = $conn->prepare($query_pedido);
     $stmt_pedido->bindValue(1, $numero_pedido, PDO::PARAM_STR);
     $stmt_pedido->execute();

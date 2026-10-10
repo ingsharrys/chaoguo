@@ -26,9 +26,10 @@ try {
         $orders = [];
         foreach ($result as $order) {
             $numero_pedido = $order['numero_pedido'];
-            $detalles_query = "SELECT pr.nombre, p.cantidad, pr.precio 
+            $detalles_query = "SELECT pr.nombre, p.cantidad, prp.precio 
                                FROM pedidos p 
-                               JOIN productos pr ON p.producto = pr.nombre 
+                               JOIN productos pr ON p.id_pro = pr.id_pro 
+                               JOIN precios prp ON prp.idproduc = p.id_pro AND prp.tipo_prod = p.tipo_producto 
                                WHERE p.numero_pedido = ?";
             $detalles_stmt = $conn->prepare($detalles_query);
             $detalles_stmt->bindValue(1, $numero_pedido, PDO::PARAM_STR);

@@ -35,9 +35,10 @@ try {
 
         if ($pedido) {
             // Obtener los productos del pedido usando el numero_pedido
-            $query = "SELECT pr.nombre, p.cantidad, pr.precio
+            $query = "SELECT pr.nombre, p.cantidad, prp.precio
                       FROM pedidos p
-                      JOIN productos pr ON p.producto = pr.nombre
+                      JOIN productos pr ON p.id_pro = pr.id_pro
+                      JOIN precios prp ON prp.idproduc = p.id_pro AND prp.tipo_prod = p.tipo_producto
                       WHERE p.numero_pedido = ?";
             $stmt = $conn->prepare($query);
             if (!$stmt) {

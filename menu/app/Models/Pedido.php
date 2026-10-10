@@ -60,13 +60,20 @@ class Pedido
             $tipoSol    = $data['tipo_solicitud'] ?? 1;
             $nuevoTurno = $this->assignTurno($orderNumber, $tipoSol, $clientId);
 
-            /* 3. ítems del pedido */
+            /* 3. ítems del pedido — se llenan también id_cliente, producto,
+               prefijos y estado: el panel los usa y si quedan vacíos el
+               pedido se muestra mal o se cruza con otro producto. */
+            $stmtCat = $this->conn->prepare("
+                SELECT nombre, prefijo FROM productos WHERE id_pro = :id LIMIT 1
+            ");
             $stmtP = $this->conn->prepare("
                 INSERT INTO pedidos
-                (id_pro, cantidad, fecha, numero_pedido, tipo_solicitud,
-                 detalle, tipo_producto)
+                (id_cliente, id_pro, producto, prefijos, cantidad, fecha,
+                 numero_pedido, tipo_solicitud, detalle, tipo_producto,
+                 estado, estado_boton)
                 VALUES
-                (:id_pro, :cant, NOW(), :num, :ts, :det, :tipo)
+                (:cli, :id_pro, :producto, :prefijos, :cant, NOW(),
+                 :num, :ts, :det, :tipo, 'nuevo', 'nuevo')
             ");
 
             foreach ($data['products'] ?? [] as $p) {
@@ -76,13 +83,19 @@ class Pedido
 
                 $detalle = trim(($p['option'] ?? '').' '.($p['suboption'] ?? '')) ?: 'Sindetalle';
 
+                $stmtCat->execute([':id' => $p['id']]);
+                $catInfo = $stmtCat->fetch(PDO::FETCH_ASSOC) ?: [];
+
                 $stmtP->execute([
-                    ':id_pro' => $p['id'],
-                    ':cant'   => $p['quantity'],
-                    ':num'    => $orderNumber,
-                    ':ts'     => $tipoSol,
-                    ':det'    => $detalle,
-                    ':tipo'   => $p['type']
+                    ':cli'      => $clientId,
+                    ':id_pro'   => $p['id'],
+                    ':producto' => $catInfo['nombre']  ?? '',
+                    ':prefijos' => $catInfo['prefijo'] ?? '',
+                    ':cant'     => $p['quantity'],
+                    ':num'      => $orderNumber,
+                    ':ts'       => $tipoSol,
+                    ':det'      => $detalle,
+                    ':tipo'     => $p['type']
                 ]);
             }
 

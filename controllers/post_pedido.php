@@ -83,11 +83,15 @@ if (!empty($data->productos) && !empty($data->numeroMesa) && !empty($data->tipo_
     // ================================
     // 3) Insertar productos (HIJO) en tabla "pedidos"
     // ================================
+    // Se llenan también id_cliente, producto, prefijos y estado: el panel
+    // los usa y si quedan vacíos el pedido se cruza con otro producto.
+    $stmtProdCat = $db->prepare("SELECT nombre, prefijo FROM productos WHERE id_pro = :id LIMIT 1");
+
     $queryP = "
         INSERT INTO pedidos
-        (id_pro, cantidad, numero_pedido, tipo_solicitud, detalle, tipo_producto, mesa, mesero, fecha)
+        (id_cliente, id_pro, producto, prefijos, cantidad, numero_pedido, tipo_solicitud, detalle, tipo_producto, mesa, mesero, estado, estado_boton, fecha)
         VALUES
-        (:id_pro, :cantidad, :numero_pedido, :tipo_solicitud, :detalle, :tipo_producto, :mesa, :mesero, NOW())
+        (:id_cliente, :id_pro, :producto, :prefijos, :cantidad, :numero_pedido, :tipo_solicitud, :detalle, :tipo_producto, :mesa, :mesero, :estado, 'nuevo', NOW())
     ";
     $stmtP = $db->prepare($queryP);
 
@@ -99,8 +103,16 @@ if (!empty($data->productos) && !empty($data->numeroMesa) && !empty($data->tipo_
         $tipo_producto = !empty($producto->tipo_prod) ? $producto->tipo_prod : '';
         $mesero        = !empty($data->id_mesero)     ? $data->id_mesero     : null;
 
+        $stmtProdCat->execute([':id' => $id_pro]);
+        $prodInfo = $stmtProdCat->fetch(PDO::FETCH_ASSOC) ?: [];
+        $nombre_producto  = $prodInfo['nombre']  ?? '';
+        $prefijo_producto = $prodInfo['prefijo'] ?? '';
+
         // Asignar parámetros
+        $stmtP->bindParam(':id_cliente',     $id_cliente);
         $stmtP->bindParam(':id_pro',         $id_pro);
+        $stmtP->bindParam(':producto',       $nombre_producto);
+        $stmtP->bindParam(':prefijos',       $prefijo_producto);
         $stmtP->bindParam(':cantidad',       $cantidad);
         $stmtP->bindParam(':numero_pedido',  $numero_pedido);
         $stmtP->bindParam(':tipo_solicitud', $data->tipo_solicitud);
@@ -108,6 +120,7 @@ if (!empty($data->productos) && !empty($data->numeroMesa) && !empty($data->tipo_
         $stmtP->bindParam(':tipo_producto',  $tipo_producto);
         $stmtP->bindParam(':mesa',           $data->numeroMesa);
         $stmtP->bindParam(':mesero',         $mesero);
+        $stmtP->bindParam(':estado',         $estado);
 
         if (!$stmtP->execute()) {
             // Capturar error si falla

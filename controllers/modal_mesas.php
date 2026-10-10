@@ -19,11 +19,13 @@ $conn = $db->getConnection();
 
 // Funciones para obtener los detalles del pedido y otros datos relacionados
 function obtenerDetallesPedido($conn, $numero_pedido) {
+    // Cruce por id_pro (no por nombre): cruzar por nombre muestra otro
+    // producto cuando la columna producto está vacía o hay nombres repetidos.
     $detalle_query = "SELECT pr.nombre AS nombre_producto, p.cantidad, prp.precio AS precio_producto, p.detalle, p.tipo_producto, p.mesa
-                      FROM pedidos p 
-                      JOIN productos pr ON p.producto = pr.nombre 
-                      JOIN precios prp ON pr.id_pro = prp.idproduc 
-                      WHERE p.numero_pedido = ? AND prp.tipo_prod = p.tipo_producto";
+                      FROM pedidos p
+                      JOIN productos pr ON p.id_pro = pr.id_pro
+                      JOIN precios prp ON prp.idproduc = p.id_pro AND prp.tipo_prod = p.tipo_producto
+                      WHERE p.numero_pedido = ?";
     $detalle_stmt = $conn->prepare($detalle_query);
     $detalle_stmt->bindValue(1, $numero_pedido, PDO::PARAM_STR);
     $detalle_stmt->execute();

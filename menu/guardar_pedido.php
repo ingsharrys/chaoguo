@@ -111,11 +111,23 @@ try {
     }
 
     // Insertar pedido en la tabla pedidos (esto asegura que el pedido exista antes de asignar un turno)
+    // Se llenan también producto, prefijos, id_cliente y estado: el panel
+    // (caja, dashboard) usa esas columnas y si quedan vacías el pedido se
+    // muestra mal o se cruza con otro producto.
+    $stmtProdCat = $conn->prepare("SELECT nombre, prefijo FROM productos WHERE id_pro = :id LIMIT 1");
     foreach ($products as $product) {
-        $query = "INSERT INTO pedidos (id_pro, cantidad, fecha, numero_pedido, tipo_solicitud, detalle, tipo_producto) 
-                  VALUES (:id_pro, :quantity, :fecha, :order_number, :tipo_solicitud, :detalle, :tipo_producto)";
+        $stmtProdCat->execute([':id' => $product['id']]);
+        $prodInfo = $stmtProdCat->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $query = "INSERT INTO pedidos (id_cliente, id_pro, producto, prefijos, cantidad, fecha, numero_pedido, tipo_solicitud, detalle, tipo_producto, estado, estado_boton)
+                  VALUES (:id_cliente, :id_pro, :producto, :prefijos, :quantity, :fecha, :order_number, :tipo_solicitud, :detalle, :tipo_producto, 'nuevo', 'nuevo')";
         $stmt = $conn->prepare($query);
+        $stmt->bindParam(':id_cliente', $clientId);
         $stmt->bindParam(':id_pro', $product['id']); // Guardar el id_pro del producto
+        $producto_nombre  = $prodInfo['nombre']  ?? '';
+        $producto_prefijo = $prodInfo['prefijo'] ?? '';
+        $stmt->bindParam(':producto', $producto_nombre);
+        $stmt->bindParam(':prefijos', $producto_prefijo);
         $stmt->bindParam(':quantity', $product['quantity']);
         $fecha = date('Y-m-d H:i:s'); // Obtener la fecha y hora actuales en la zona horaria establecida
         $stmt->bindParam(':fecha', $fecha);
