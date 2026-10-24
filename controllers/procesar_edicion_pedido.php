@@ -31,13 +31,26 @@ if (isset($_POST['productos_existentes'])) {
 
             error_log("🔄 Actualizando producto - ID Pedido: $id_pedido, ID Producto: $nuevo_id_pro, Cantidad: $cantidad, Tipo: $tipo_producto, Detalle: $detalle");
 
-            // ✅ **Corregimos la consulta de actualización**
-            $query = "UPDATE pedidos 
-                      SET id_pro = :nuevo_id_pro, cantidad = :cantidad, tipo_producto = :tipo_producto, detalle = :detalle 
+            // Nombre y prefijo del catálogo para el NUEVO id_pro: si no se
+            // refrescan junto con el id, la fila queda con el texto del
+            // producto anterior y el ticket imprime un producto distinto
+            // al que muestra el panel.
+            $stmtCat = $conn->prepare("SELECT nombre, prefijo FROM productos WHERE id_pro = :id_pro LIMIT 1");
+            $stmtCat->bindParam(':id_pro', $nuevo_id_pro, PDO::PARAM_INT);
+            $stmtCat->execute();
+            $catDatos = $stmtCat->fetch(PDO::FETCH_ASSOC) ?: [];
+            $nombre_cat  = $catDatos['nombre']  ?? '';
+            $prefijo_cat = $catDatos['prefijo'] ?? '';
+
+            $query = "UPDATE pedidos
+                      SET id_pro = :nuevo_id_pro, producto = :producto, prefijos = :prefijos,
+                          cantidad = :cantidad, tipo_producto = :tipo_producto, detalle = :detalle
                       WHERE id_pedido = :id_pedido"; // Ahora usamos id_pedido para actualizar un producto específico
 
             $stmt = $conn->prepare($query);
             $stmt->bindParam(':nuevo_id_pro', $nuevo_id_pro, PDO::PARAM_INT);
+            $stmt->bindParam(':producto', $nombre_cat, PDO::PARAM_STR);
+            $stmt->bindParam(':prefijos', $prefijo_cat, PDO::PARAM_STR);
             $stmt->bindParam(':cantidad', $cantidad, PDO::PARAM_INT);
             $stmt->bindParam(':tipo_producto', $tipo_producto, PDO::PARAM_STR);
             $stmt->bindParam(':detalle', $detalle, PDO::PARAM_STR);

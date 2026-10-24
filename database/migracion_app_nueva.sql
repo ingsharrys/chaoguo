@@ -74,6 +74,19 @@ SET p.producto = pr.nombre,
 WHERE p.producto = '';
 
 -- ----------------------------------------------------------------------------
+-- 5b. Re-sincronizar nombre y prefijo con el catálogo cuando difieren:
+--     al EDITAR un pedido se cambiaba el id del producto sin refrescar el
+--     texto, y el ticket imprimía un producto distinto al del panel.
+--     El id_pro es la fuente de verdad. Idempotente.
+-- ----------------------------------------------------------------------------
+UPDATE pedidos p
+JOIN productos pr ON p.id_pro = pr.id_pro
+SET p.producto = pr.nombre,
+    p.prefijos = pr.prefijo
+WHERE p.producto <> pr.nombre
+   OR p.prefijos <> pr.prefijo;
+
+-- ----------------------------------------------------------------------------
 -- 6. Cliente genérico (id=1): los pedidos de mesa se asocian a este cliente.
 --    La tabla clientes está vacía y el panel exige que el cliente exista.
 -- ----------------------------------------------------------------------------

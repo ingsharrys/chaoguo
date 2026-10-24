@@ -40,12 +40,14 @@ try {
     if (!$cab && !$base) throw new Exception("Pedido #$np no encontrado");
 
     /* ── Productos con precio (LEFT JOIN: nunca se pierde una línea) ──
-       El nombre sale de pedidos.producto y, si esa columna está vacía
-       (pedidos guardados por rutas antiguas), se toma directamente del
-       catálogo de productos por su código: el ticket SIEMPRE lleva nombre. */
+       El nombre sale del CATÁLOGO según p.id_pro (fuente de verdad: es
+       lo mismo que muestra el panel). Solo si el código no existe en el
+       catálogo se usa el texto guardado en pedidos.producto. Así ticket
+       y panel muestran SIEMPRE el mismo producto, aun si el pedido fue
+       editado. */
     $stmt = $db->prepare("
-        SELECT COALESCE(NULLIF(TRIM(p.producto), ''), cat.nombre, 'Producto') AS producto,
-               COALESCE(NULLIF(TRIM(p.prefijos), ''), cat.prefijo, '')        AS prefijos,
+        SELECT COALESCE(cat.nombre, NULLIF(TRIM(p.producto), ''), 'Producto') AS producto,
+               COALESCE(cat.prefijo, NULLIF(TRIM(p.prefijos), ''), '')        AS prefijos,
                p.tipo_producto, p.cantidad, p.detalle,
                COALESCE(pr.precio, 0)              AS precio,
                p.cantidad * COALESCE(pr.precio, 0) AS subtotal
