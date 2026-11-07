@@ -1,4 +1,11 @@
 <?php
+/* PROTECCIÓN: este script toca/inspecciona la base de datos de producción.
+   Solo se puede ejecutar por consola (CLI) o con la sesión del panel
+   iniciada en este navegador. Antes era ejecutable por CUALQUIERA por URL. */
+if (php_sapi_name() !== 'cli') {
+    require_once __DIR__ . '/helpers/auth_guard.php';
+}
+
 /**
  * REPARADOR UNIVERSAL DE DEFINERS FANTASMA - ChaoGuo
  *

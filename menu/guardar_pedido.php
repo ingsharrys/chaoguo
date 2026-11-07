@@ -1,40 +1,33 @@
-<?php 
+<?php
 require_once '../config/database.php';
-require_once '../controllers/generar_numero_pedido.php'; // Incluimos el archivo de generar número de pedido
 
 // Establecer la zona horaria a Colombia
 date_default_timezone_set('America/Bogota');
 
 // Función para asignar el turno correspondiente
 function assignTurno($conn, $orderNumber, $tipo_solicitud, $clientId) {
-    // Obtener la fecha actual en formato Y-m-d (sin la hora)
-    $fecha_actual = date('Y-m-d');
     $estadopedi = 'nuevo';
 
-    // Consultar el último turno asignado para el mismo tipo_solicitud en la fecha actual.
-    // Rango de fechas (no DATE(fecha)=...) para que use el índice idx_turnero_fecha_tipo
-    // y no escanee toda la tabla en cada pedido.
-    $query = "SELECT MAX(turno) AS max_turno FROM turnero
-              WHERE fecha >= :fecha_actual
-                AND fecha < :fecha_actual2 + INTERVAL 1 DAY
-                AND tipo_solicitud = :tipo_solicitud";
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(':fecha_actual', $fecha_actual); // Usar solo la fecha (Y-m-d)
-    $stmt->bindParam(':fecha_actual2', $fecha_actual);
+    // Siguiente turno del día para este tipo: contador atómico por día+tipo
+    // (tabla turnos_contador). Sustituye al SELECT MAX(turno) que, sin
+    // bloqueo, generaba turnos duplicados en hora pico y, con bloqueo,
+    // serializaba todos los pedidos.
+    $stmt = $conn->prepare("
+        INSERT INTO turnos_contador (fecha, tipo, valor)
+        VALUES (CURDATE(), :tipo_solicitud, LAST_INSERT_ID(1))
+        ON DUPLICATE KEY UPDATE valor = LAST_INSERT_ID(valor + 1)
+    ");
     $stmt->bindParam(':tipo_solicitud', $tipo_solicitud);
     $stmt->execute();
-    $max_turno = $stmt->fetchColumn();
-
-    // Si no hay turnos para hoy, comenzamos desde 1
-    $nuevo_turno = $max_turno ? $max_turno + 1 : 1;
+    $nuevo_turno = (int)$conn->lastInsertId();
 
     // Insertar el nuevo turno en la tabla turnero
-    $query = "INSERT INTO turnero (id_pedido, turno, fecha, tipo_solicitud, estado, id_cliente) 
+    $query = "INSERT INTO turnero (id_pedido, turno, fecha, tipo_solicitud, estado, id_cliente)
               VALUES (:id_pedido, :turno, :fecha, :tipo_solicitud, :estado, :id_cliente)";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':id_pedido', $orderNumber);
     $stmt->bindParam(':turno', $nuevo_turno);
-    
+
     // Guardar la fecha actual con la hora en el formato Y-m-d H:i:s
     $fecha_completa = date('Y-m-d H:i:s');
     $stmt->bindParam(':fecha', $fecha_completa);
@@ -50,17 +43,27 @@ try {
     // Conectar a la base de datos
     $db = new Database();
     $conn = $db->getConnection();
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Obtener datos del formulario
     $name = $_POST['name'] ?? '';
     $phone = $_POST['phone'] ?? '';
-    $address = isset($_POST['address']) ? urldecode($_POST['address']) : ''; 
+    $address = isset($_POST['address']) ? urldecode($_POST['address']) : '';
     $barrio = $_POST['barrio'] ?? '';
     $email = $_POST['email'] ?? 'sincorreo';
     $id = $_POST['id'] ?? '0';
     $products = $_POST['products'] ?? [];
     $tipo_solicitud = $_POST['tipo_solicitud'] ?? 1; // Obtener el valor de tipo_solicitud
     $comments = $_POST['comments'] ?? ''; // Obtener comentario
+
+    if (empty($products) || !is_array($products)) {
+        echo json_encode(['status' => 'error', 'message' => 'El pedido no tiene productos.']);
+        exit;
+    }
+
+    // TODO el pedido va en UNA transacción: si algo falla a mitad no quedan
+    // pedidos a medias (turno sin productos, comentario huérfano, etc.).
+    $conn->beginTransaction();
 
     // Verificar si el cliente ya existe
     $query = "SELECT id FROM clientes WHERE celular = :phone";
@@ -95,9 +98,22 @@ try {
         $clientId = $conn->lastInsertId();
     }
 
-    // Generar número de pedido único desde generar_numero_pedido.php
-    $orderNumber = generarNumeroPedido($conn); // Llamamos a la función de generar número de pedido
-    
+    // Generar número de pedido único con el contador 'consecutivos': una
+    // sola fila bloqueada un instante. Reemplaza a generarNumeroPedido(),
+    // que recorría números uno a uno (miles de consultas por pedido) y
+    // REUTILIZABA números de pedidos borrados, chocando con los otros
+    // canales (app de mesas y panel) y con pagos históricos en caja.
+    $stmt = $conn->prepare("
+        UPDATE consecutivos
+        SET valor = LAST_INSERT_ID(valor + 1)
+        WHERE nombre = 'num_pedido'
+    ");
+    $stmt->execute();
+    if ($stmt->rowCount() === 0) {
+        throw new Exception("Falta la fila 'num_pedido' en la tabla consecutivos.");
+    }
+    $orderNumber = (int)$conn->lastInsertId();
+
      // Asignar el turno correspondiente para este pedido (después de que el pedido se ha creado)
     $nuevo_turno = assignTurno($conn, $orderNumber, $tipo_solicitud, $clientId);
 
@@ -140,10 +156,14 @@ try {
         $stmt->execute();
     }
 
-   
+    $conn->commit();
 
     echo json_encode(['status' => 'success', 'message' => 'Pedido guardado correctamente', 'order_number' => $orderNumber, 'turno' => $nuevo_turno]);
-} catch (PDOException $e) {
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+} catch (Exception $e) {
+    if (isset($conn) && $conn->inTransaction()) {
+        $conn->rollBack();
+    }
+    error_log('[guardar_pedido] ' . $e->getMessage());
+    echo json_encode(['status' => 'error', 'message' => 'No se pudo guardar el pedido. Intenta de nuevo.']);
 }
 ?>

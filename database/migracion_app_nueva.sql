@@ -125,6 +125,29 @@ CREATE INDEX idx_turnero_fecha_tipo ON turnero (fecha, tipo_solicitud);
 CREATE INDEX idx_caja_fecha_cajero  ON caja (fecha_caja, id_cajero);
 CREATE INDEX idx_abono_credito_fec  ON abono_credito (fecha_abono);
 CREATE INDEX idx_gastos_fecha       ON gastos (fecha);
+CREATE INDEX idx_domicilios_pedido  ON domicilios (id_pedido);
+
+-- ----------------------------------------------------------------------------
+-- 8b. Contador atómico de turnos por día y tipo de solicitud.
+--     Reemplaza al "SELECT MAX(turno) ... FOR UPDATE" que bloqueaba filas de
+--     turnero y serializaba la creación de pedidos (deadlocks y pedidos en
+--     cola en hora pico). Cada pedido ahora incrementa UNA fila puntual.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS turnos_contador (
+  fecha DATE NOT NULL,
+  tipo  INT  NOT NULL,
+  valor INT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (fecha, tipo)
+) ENGINE=InnoDB;
+
+-- Sembrar el contador de HOY con el máximo turno ya emitido, para que los
+-- turnos no se repitan al cambiar de mecanismo. Idempotente (GREATEST).
+INSERT INTO turnos_contador (fecha, tipo, valor)
+SELECT CURDATE(), t.tipo_solicitud, MAX(t.turno)
+FROM turnero t
+WHERE t.fecha >= CURDATE() AND t.fecha < CURDATE() + INTERVAL 1 DAY
+GROUP BY t.tipo_solicitud
+ON DUPLICATE KEY UPDATE valor = GREATEST(valor, VALUES(valor));
 
 -- ----------------------------------------------------------------------------
 -- 9. Sincronizar el consecutivo de pedidos con el máximo real.
@@ -136,17 +159,29 @@ WHERE nombre = 'num_pedido'
 
 -- ----------------------------------------------------------------------------
 -- 10. Restaurar claves primarias y auto-incrementos.
---     La importación de la base de datos llegó SIN claves primarias ni
---     auto_increment, lo que rompe todos los INSERT (pedidos, caja, etc.).
---     Si alguna tabla ya la tiene, dará "Multiple primary key defined":
---     es inofensivo, continúa con la siguiente.
+--     IMPORTANTE: PRIMARY KEY y AUTO_INCREMENT van en sentencias SEPARADAS.
+--     Antes iban juntas y, si la PK ya existía, TODA la sentencia fallaba con
+--     "Multiple primary key defined" (marcada como inofensiva) y el
+--     AUTO_INCREMENT se quedaba sin restaurar — así fue como productos quedó
+--     creando productos nuevos con id_pro = 0.
+--     "Multiple primary key" en las líneas ADD PRIMARY KEY = inofensivo.
+--     Un ERROR en las líneas MODIFY = problema REAL que hay que revisar.
 -- ----------------------------------------------------------------------------
-ALTER TABLE pedidos     MODIFY id_pedido INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_pedido);
-ALTER TABLE caja        MODIFY id_c      INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_c);
-ALTER TABLE clientes    MODIFY id        INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id);
-ALTER TABLE comentarios MODIFY idc       INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (idc);
-ALTER TABLE mesas       MODIFY idm       INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (idm);
-ALTER TABLE meseros     MODIFY id_mese   INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_mese);
-ALTER TABLE precios     MODIFY idpre     INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (idpre);
-ALTER TABLE productos   MODIFY id_pro    INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_pro);
-ALTER TABLE domicilios  MODIFY id_d      INT NOT NULL AUTO_INCREMENT, ADD PRIMARY KEY (id_d);
+ALTER TABLE pedidos     ADD PRIMARY KEY (id_pedido);
+ALTER TABLE pedidos     MODIFY id_pedido INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE caja        ADD PRIMARY KEY (id_c);
+ALTER TABLE caja        MODIFY id_c      INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE clientes    ADD PRIMARY KEY (id);
+ALTER TABLE clientes    MODIFY id        INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE comentarios ADD PRIMARY KEY (idc);
+ALTER TABLE comentarios MODIFY idc       INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE mesas       ADD PRIMARY KEY (idm);
+ALTER TABLE mesas       MODIFY idm       INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE meseros     ADD PRIMARY KEY (id_mese);
+ALTER TABLE meseros     MODIFY id_mese   INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE precios     ADD PRIMARY KEY (idpre);
+ALTER TABLE precios     MODIFY idpre     INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE productos   ADD PRIMARY KEY (id_pro);
+ALTER TABLE productos   MODIFY id_pro    INT NOT NULL AUTO_INCREMENT;
+ALTER TABLE domicilios  ADD PRIMARY KEY (id_d);
+ALTER TABLE domicilios  MODIFY id_d      INT NOT NULL AUTO_INCREMENT;

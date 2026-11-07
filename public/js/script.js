@@ -280,13 +280,9 @@ function mainLoop(){
   if (tipoSol() === '51') renderMesas();
   renderTurnos();
 }
-document.addEventListener('DOMContentLoaded',()=>{
-  mainLoop(); setInterval(mainLoop, REFRESH_MS);
-  setInterval(() => $$('#tabla-turnos [id^="tmp-"]').forEach(el=>{
-    const fecha = new Date(el.closest('tr').dataset.fecha);
-    el.textContent = ago(fecha);
-  }), 1_000);
-});
+/* El arranque del polling está UNA sola vez, al final del archivo (junto a
+   la init del modal). Antes había un segundo DOMContentLoaded aquí que
+   duplicaba TODA la carga de polling de cada navegador abierto. */
 
 /* ═════ Mantén globales tus demás funciones originales ═════ */
 

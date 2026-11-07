@@ -1,4 +1,11 @@
 <?php
+require_once __DIR__ . '/../helpers/Session.php';
+Session::start();
+if (!Session::get('user_id') && !Session::get('cajero')) {
+    header('Location: login.php');
+    exit;
+}
+
 require_once '../controllers/actualizar_reporte.php';
 
 $reporteController = new ReporteController();

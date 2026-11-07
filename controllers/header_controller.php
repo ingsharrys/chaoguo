@@ -36,10 +36,10 @@ $queryAbonosMetodo = "
        SUM(CASE WHEN m_pagocr='tarjeta' THEN CAST(efectivo AS DECIMAL(10,2)) ELSE 0 END) AS abonos_tarjeta,
        SUM(CASE WHEN m_pagocr='transferencia' THEN CAST(efectivo AS DECIMAL(10,2)) ELSE 0 END) AS abonos_transfer
     FROM abono_credito
-    WHERE DATE(fecha_abono)=:fecha_actual
+    WHERE fecha_abono >= :fecha_actual AND fecha_abono < :fecha_fin
 ";
 $stmtAbonosMetodo = $conn->prepare($queryAbonosMetodo);
-$stmtAbonosMetodo->execute([':fecha_actual' => $fecha_actual]);
+$stmtAbonosMetodo->execute([':fecha_actual' => $fecha_actual, ':fecha_fin' => date('Y-m-d', strtotime($fecha_actual . ' +1 day'))]);
 $resultAbonosMetodo = $stmtAbonosMetodo->fetch(PDO::FETCH_ASSOC);
 
 if ($resultAbonosMetodo) {
@@ -59,7 +59,7 @@ $result       = $stmt->fetch(PDO::FETCH_ASSOC);
 $total_gastos = $result['total_gastos'] ?? 0;
 
 // Obtener gastos de n��mina
-$query_abonos = "SELECT SUM(cantidad) AS total_nomina FROM abono_nomina WHERE DATE(fecha) = :fecha_actual";
+$query_abonos = "SELECT SUM(cantidad) AS total_nomina FROM abono_nomina WHERE fecha = :fecha_actual";
 $stmt_abonos  = $conn->prepare($query_abonos);
 $stmt_abonos->bindParam(':fecha_actual', $fecha_actual);
 $stmt_abonos->execute();

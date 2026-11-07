@@ -34,10 +34,11 @@ class Pedido
             JOIN   turnero  t ON p.numero_pedido = t.id_pedido
             JOIN   productos pro ON p.id_pro = pro.id_pro
             WHERE  t.id_cliente = ?
-              AND  DATE(t.fecha) = ?
+              AND  t.fecha >= ?
+              AND  t.fecha < ? + INTERVAL 1 DAY
         ";
         $st = $this->conn->prepare($sql);
-        $st->execute([$idCliente, $fecha]);
+        $st->execute([$idCliente, $fecha, $fecha]);
 
         return $st->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -129,20 +130,15 @@ class Pedido
     /*──────────────────────────  Helpers privados  ────────────────────*/
     private function assignTurno(int $orderNumber, int $tipoSol, int $clientId): int
     {
-        /* siguiente turno del día para ese tipo.
-           Rango de fechas (no DATE(fecha)=CURDATE()): así usa el índice
-           idx_turnero_fecha_tipo y el FOR UPDATE solo bloquea las filas
-           de hoy, no toda la tabla. */
-        $st = $this->conn->prepare("
-            SELECT COALESCE(MAX(turno),0)+1
-            FROM turnero
-            WHERE fecha >= CURDATE()
-              AND fecha <  CURDATE() + INTERVAL 1 DAY
-              AND tipo_solicitud=:ts
-            FOR UPDATE
-        ");
-        $st->execute([':ts'=>$tipoSol]);
-        $turno = (int)$st->fetchColumn();
+        /* siguiente turno del día para ese tipo: contador atómico por
+           día+tipo (turnos_contador). Sustituye al SELECT MAX(turno)
+           FOR UPDATE que bloqueaba turnero y serializaba los pedidos. */
+        $this->conn->prepare("
+            INSERT INTO turnos_contador (fecha, tipo, valor)
+            VALUES (CURDATE(), :ts, LAST_INSERT_ID(1))
+            ON DUPLICATE KEY UPDATE valor = LAST_INSERT_ID(valor + 1)
+        ")->execute([':ts' => $tipoSol]);
+        $turno = (int)$this->conn->lastInsertId();
 
         /* insertar turno ligado al pedido */
         $this->conn->prepare("

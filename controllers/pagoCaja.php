@@ -1,14 +1,14 @@
 <?php
+require_once __DIR__ . '/../helpers/auth_guard.php'; // solo personal logueado
+
 header('Content-Type: application/json');
 ob_start(); // Iniciar el buffer de salida para evitar salidas no deseadas
 
-// Mostrar errores de PHP (solo para desarrollo)
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Producción: los errores van al log, nunca al navegador
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
-// Iniciar sesión
-session_start();
+// La sesión segura del panel ya fue iniciada por auth_guard.php
 
 // Incluir clases necesarias
 require_once '../config/database.php'; // Incluye la conexión a la base de datos
@@ -281,8 +281,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['numero_pedido'])) {
         ]);
     }
     catch (Exception $e) {
-        $conn->rollBack();
+        if ($conn->inTransaction()) $conn->rollBack();
         ob_clean();
+        /* 1062 = clave única unique_idpedidoc: otro cajero registró el pago
+           un instante antes. Mensaje claro en vez de error técnico. */
+        if ($e instanceof PDOException && isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062) {
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'El pedido ya fue pagado'
+            ]);
+            exit;
+        }
+        error_log('[pagoCaja] ' . $e->getMessage());
         echo json_encode([
             'status'    => 'error',
             'message'   => 'Error al procesar: ' . $e->getMessage()

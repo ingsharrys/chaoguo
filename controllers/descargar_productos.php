@@ -1,4 +1,6 @@
-<?php 
+<?php
+require_once __DIR__ . '/../helpers/auth_guard.php'; // solo personal logueado
+ 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -46,11 +48,13 @@ if ($tipo && ($tipo == 'dia' || isset($tipoSolicitudMap[$tipo])) && $valor) {
         LEFT JOIN meseros m ON p.mesero = m.id_mese
         LEFT JOIN caja c ON p.numero_pedido = c.id_pedidoc
         LEFT JOIN clientes cl ON p.id_cliente = cl.id
-        WHERE DATE(p.fecha) = :valor AND p.tipo_solicitud IN (50, 51, 52, 53)
+        WHERE p.fecha >= :valor AND p.fecha < :valor_fin AND p.tipo_solicitud IN (50, 51, 52, 53)
         ORDER BY p.numero_pedido ASC, p.fecha ASC";
         
         $stmtProductos = $conn->prepare($queryProductos);
         $stmtProductos->bindParam(':valor', $valor);
+        $valor_fin = date('Y-m-d', strtotime($valor . ' +1 day'));
+        $stmtProductos->bindParam(':valor_fin', $valor_fin);
     } else {
         // Para los otros tipos, usamos el filtro por tipo_solicitud específico
         $tipoSolicitud = $tipoSolicitudMap[$tipo];
@@ -68,11 +72,13 @@ if ($tipo && ($tipo == 'dia' || isset($tipoSolicitudMap[$tipo])) && $valor) {
         LEFT JOIN clientes cl ON p.id_cliente = cl.id
         LEFT JOIN domicilios d ON p.numero_pedido = d.id_pedido
         LEFT JOIN domiciliarios domi ON d.id_domi = domi.id_e
-        WHERE DATE(p.fecha) = :valor AND p.tipo_solicitud = :tipo_solicitud
+        WHERE p.fecha >= :valor AND p.fecha < :valor_fin AND p.tipo_solicitud = :tipo_solicitud
         ORDER BY p.numero_pedido ASC, p.fecha ASC";
 
         $stmtProductos = $conn->prepare($queryProductos);
         $stmtProductos->bindParam(':valor', $valor);
+        $valor_fin = date('Y-m-d', strtotime($valor . ' +1 day'));
+        $stmtProductos->bindParam(':valor_fin', $valor_fin);
         $stmtProductos->bindParam(':tipo_solicitud', $tipoSolicitud);
     }
 

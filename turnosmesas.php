@@ -24,7 +24,7 @@ $query = "
         c.comentario,
         p.fecha  -- Agregamos el campo fecha para el cronómetro
     FROM mesas m
-    LEFT JOIN pedidos p ON m.id_pedido = p.numero_pedido
+    LEFT JOIN pedidos p ON m.id_pedido = p.numero_pedido AND m.estado = 'en_cocina'
     LEFT JOIN meseros me ON p.mesero = me.id_mese
     LEFT JOIN comentarios c ON p.numero_pedido = c.id_pedido
     ORDER BY 
@@ -179,31 +179,23 @@ foreach ($resultados as $resultado) {
 <!-- Recargar los datos automáticamente cada 5 segundos -->
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script>
-// Función para iniciar y actualizar el cronómetro
-function iniciarCronometro() {
-    // Encontramos todos los elementos que tienen el cronómetro y la fecha de inicio
+// Un ÚNICO cronómetro global de 1 s para todos los elementos.
+// Antes cada refresco creaba un setInterval por elemento sin limpiar los
+// anteriores: miles de timers acumulados al día que degradaban la pestaña.
+setInterval(function() {
     document.querySelectorAll('[id^="cronometro-"]').forEach(function(element) {
         const fechaInicio = new Date(element.getAttribute('data-fecha').replace(' ', 'T')); // Aseguramos el formato adecuado
-        setInterval(function() {
-            // Calcular la diferencia de tiempo entre la fecha actual y la fecha de inicio
-            const ahora = new Date();
-            const diferencia = ahora - fechaInicio;  // Diferencia en milisegundos
+        const diferencia = new Date() - fechaInicio;  // Diferencia en milisegundos
 
-            // Convertir la diferencia a horas, minutos y segundos
-            const horas = Math.floor(diferencia / (1000 * 60 * 60));
-            const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
-            const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
+        // Convertir la diferencia a horas, minutos y segundos
+        const horas = Math.floor(diferencia / (1000 * 60 * 60));
+        const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+        const segundos = Math.floor((diferencia % (1000 * 60)) / 1000);
 
-            // Mostrar el cronómetro en formato HH:MM:SS
-            element.textContent = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
-        }, 1000);  // Actualizar cada segundo
+        // Mostrar el cronómetro en formato HH:MM:SS
+        element.textContent = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
     });
-}
-
-// Llamar a la función cuando se cargue la página
-document.addEventListener('DOMContentLoaded', function() {
-    iniciarCronometro();
-});
+}, 1000);
 
 function actualizarMesas() {
     $.ajax({
@@ -211,7 +203,7 @@ function actualizarMesas() {
         method: 'GET',
         success: function(data) {
             $('#mesas-container').html($(data).find('#mesas-container').html());
-            iniciarCronometro();  // Reiniciar los cronómetros después de actualizar las mesas
+            // Los cronómetros los actualiza el intervalo global de 1 s
         },
         error: function(err) {
             console.error('Error al actualizar las mesas:', err);
@@ -219,8 +211,9 @@ function actualizarMesas() {
     });
 }
 
-// Actualizar las mesas cada 5 segundos
-setInterval(actualizarMesas, 5000);
+// Actualizar las mesas cada 10 segundos (antes 5: la mitad de carga al
+// servidor sin perder frescura en cocina)
+setInterval(actualizarMesas, 10000);
 
 function actualizarEstadoMesa(mesaId, numeroMesa) {
     if (!confirm(`¿Estás seguro de que deseas marcar la mesa ${numeroMesa} como entregada?`)) {

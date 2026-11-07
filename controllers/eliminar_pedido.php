@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../helpers/auth_guard.php'; // solo personal logueado
+
 require_once '../config/database.php';
 header('Content-Type: application/json');
 
@@ -38,6 +40,15 @@ try {
     $stmtTipo->execute();
     $rowTipo = $stmtTipo->fetch(PDO::FETCH_ASSOC);
     $tipoSolicitud = $rowTipo ? (int)$rowTipo['tipo_solicitud'] : 0;
+
+    // 3b. Si el pedido ya tiene un pago registrado en caja, NO se elimina:
+    //     borrarlo dejaría un pago fantasma que descuadra el cierre diario.
+    //     Primero se reversa el pago en caja y luego sí se puede eliminar.
+    $stmtPago = $conn->prepare("SELECT COUNT(*) FROM caja WHERE id_pedidoc = :np");
+    $stmtPago->execute([':np' => $numero_pedido]);
+    if ((int)$stmtPago->fetchColumn() > 0) {
+        throw new Exception("Este pedido ya tiene un pago registrado en caja. Reversa el pago primero y luego elimínalo.");
+    }
 
     /* Eliminación COMPLETA y atómica: todo dentro de una transacción.
        Si algo falla, no se borra nada a medias. */

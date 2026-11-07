@@ -633,15 +633,10 @@ function cargarDatosTurnos(tipoSolicitud) {
                     });
     
                     // 5. Crear un intervalo (setInterval) para que cada 1 segundo actualice el tiempo restante
-                    setInterval(() => {
-                        data.turnos.forEach(turno => {
-                            const fila = document.getElementById(`temporizador-${turno.numero_pedido}`);
-                            if (fila) {
-                                const tiempoRestanteActualizado = calcularTiempoRestante(new Date(turno.fecha));
-                                fila.innerText = tiempoRestanteActualizado;
-                            }
-                        });
-                    }, 5000);
+                    /* Los temporizadores los actualiza el intervalo global
+                       de 1 s (actualizarTemporizadores). Antes aquí se creaba
+                       un setInterval NUEVO en cada refresco sin limpiar los
+                       anteriores: miles de timers acumulados al día. */
     
                 } else {
                     // Si no hay turnos, se muestra un mensaje simple
@@ -908,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cargarDatosMesas();
         }else{}
         cargarDatosTurnos(tipoSolicitud);
-    }, 5000);
+    }, 15000); // antes 5000: 3x menos carga al servidor por pantalla abierta
 });
 
 //DOMICILIOS

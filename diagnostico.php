@@ -1,4 +1,11 @@
 <?php
+/* PROTECCIÓN: este script toca/inspecciona la base de datos de producción.
+   Solo se puede ejecutar por consola (CLI) o con la sesión del panel
+   iniciada en este navegador. Antes era ejecutable por CUALQUIERA por URL. */
+if (php_sapi_name() !== 'cli') {
+    require_once __DIR__ . '/helpers/auth_guard.php';
+}
+
 /**
  * DIAGNÓSTICO DEL LOGIN Y LA BASE DE DATOS - ChaoGuo
  *
@@ -71,7 +78,7 @@ try {
 }
 
 /* ── 6. Prueba real de la contraseña temporal ── */
-echo "[6] Prueba de login con dario.charry.ramos@gmail.com / ChaoGuo2026* ...\n";
+echo "[6] Prueba de login con la contrasena temporal ...\n";
 try {
     $stmt = $db->prepare("SELECT password FROM users WHERE email = :e LIMIT 1");
     $stmt->execute([':e' => 'dario.charry.ramos@gmail.com']);
@@ -79,9 +86,9 @@ try {
     if (!$hash) {
         echo "    ERROR: no existe usuario con ese email en ESTA base de datos ('$nombreBD').\n\n";
     } else {
-        echo "    " . (password_verify('ChaoGuo2026*', $hash)
-            ? "OK - La contraseña ChaoGuo2026* SI corresponde al hash guardado.\n\n"
-            : "ERROR: el hash guardado NO corresponde a ChaoGuo2026*.\n\n");
+        echo "    " . (password_verify('ChaoGuo2026*', $hash) /* no mostrar la clave en la salida */
+            ? "OK - La contrasena temporal SI corresponde al hash guardado.\n\n"
+            : "ERROR: el hash guardado NO corresponde a la contrasena temporal.\n\n");
     }
 } catch (Throwable $e) {
     echo "    ERROR: " . $e->getMessage() . "\n\n";

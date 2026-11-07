@@ -4,7 +4,13 @@ function obtener_coordenadas($direccion, $api_key) {
     $direccion = urlencode($direccion);
     $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$direccion&key=$api_key";
     
-    $response = file_get_contents($url);
+    // Timeout de 5 s: sin esto, un worker PHP queda colgado hasta 60 s
+    // si Google Maps no responde, y los workers colgados tumban el sitio.
+    $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+    $response = @file_get_contents($url, false, $ctx);
+    if ($response === false) {
+        throw new Exception('Google Maps no respondio a tiempo');
+    }
     $data = json_decode($response, true);
     
     if ($data['status'] == 'OK') {
@@ -21,7 +27,13 @@ function obtener_distancia_google_maps($direccion_origen, $direccion_destino, $a
 
     $url = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=$direccion_origen&destinations=$direccion_destino&key=$api_key";
 
-    $response = file_get_contents($url);
+    // Timeout de 5 s: sin esto, un worker PHP queda colgado hasta 60 s
+    // si Google Maps no responde, y los workers colgados tumban el sitio.
+    $ctx = stream_context_create(['http' => ['timeout' => 5]]);
+    $response = @file_get_contents($url, false, $ctx);
+    if ($response === false) {
+        throw new Exception('Google Maps no respondio a tiempo');
+    }
     $data = json_decode($response, true);
 
     if ($data['status'] == 'OK') {

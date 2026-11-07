@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../helpers/auth_guard.php'; // solo personal logueado
+
 // Mostrar errores de PHP
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);

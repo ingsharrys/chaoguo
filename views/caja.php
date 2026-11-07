@@ -1,4 +1,11 @@
 <?php
+require_once __DIR__ . '/../helpers/Session.php';
+Session::start();
+if (!Session::get('user_id') && !Session::get('cajero')) {
+    header('Location: login.php');
+    exit;
+}
+
 // Mostrar errores de PHP
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);

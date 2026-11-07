@@ -45,7 +45,7 @@ class TotalCalculator {
                 c.costo,
                 c.efectivo
             FROM caja c
-            WHERE DATE(c.fecha_caja) = :fecha_actual
+            WHERE c.fecha_caja = :fecha_actual
             $cajeroCond
         ";
 
@@ -87,12 +87,12 @@ class TotalCalculator {
                 m_pagocr,
                 SUM(CAST(efectivo AS DECIMAL(10,2))) as total
             FROM abono_credito 
-            WHERE DATE(fecha_abono) = :fecha_actual
+            WHERE fecha_abono >= :fecha_actual AND fecha_abono < :fecha_fin
             GROUP BY m_pagocr
         ";
 
         $stmt = $this->conn->prepare($queryAbonos);
-        $stmt->execute([':fecha_actual' => $this->fecha_actual]);
+        $stmt->execute([':fecha_actual' => $this->fecha_actual, ':fecha_fin' => date('Y-m-d', strtotime($this->fecha_actual . ' +1 day'))]);
         $abonos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($abonos as $abono) {
@@ -111,7 +111,7 @@ class TotalCalculator {
         }
 
         // 3. Calcular nómina y gastos
-        $queryNomina = "SELECT COALESCE(SUM(cantidad), 0) as total FROM abono_nomina WHERE DATE(fecha) = :fecha_actual";
+        $queryNomina = "SELECT COALESCE(SUM(cantidad), 0) as total FROM abono_nomina WHERE fecha = :fecha_actual";
         $stmt = $this->conn->prepare($queryNomina);
         $stmt->execute([':fecha_actual' => $this->fecha_actual]);
         $totales['efectivo']['nomina'] = floatval($stmt->fetchColumn());

@@ -60,13 +60,15 @@ $query_turnos = "SELECT p.numero_pedido, p.detalle, p.fecha, c.cliente, c.celula
                  FROM pedidos p 
                  JOIN clientes c ON p.id_cliente = c.id
                  LEFT JOIN turnero t ON p.numero_pedido = t.id_pedido
-                 WHERE DATE(p.fecha) = :fecha_actual
+                 WHERE p.fecha >= :fecha_actual AND p.fecha < :fecha_fin
                  GROUP BY p.numero_pedido, p.detalle, p.fecha, c.cliente, c.celular, c.email, c.direccion, p.estado, p.tipo_solicitud, p.estado_boton, p.mesa, t.turno 
                  ORDER BY 
                      t.turno ASC, FIELD(p.estado_boton, 'nuevo', 'en_cocina', 'entregado'), p.fecha DESC";
 
 $stmt_turnos = $conn->prepare($query_turnos);
 $stmt_turnos->bindParam(':fecha_actual', $fecha_actual);
+$fecha_fin_rango = date('Y-m-d', strtotime($fecha_actual . ' +1 day'));
+$stmt_turnos->bindParam(':fecha_fin', $fecha_fin_rango);
 $stmt_turnos->execute();
 $turnos = $stmt_turnos->fetchAll(PDO::FETCH_ASSOC);
 

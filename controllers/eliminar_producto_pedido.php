@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../helpers/auth_guard.php'; // solo personal logueado
+
 
 require_once '../config/database.php';
 $db = new Database();

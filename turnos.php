@@ -10,24 +10,31 @@ $conn = $db->getConnection();
 
 // Obtener la fecha actual en formato Y-m-d
 $fecha_actual = date('Y-m-d');
+$fecha_fin    = date('Y-m-d', strtotime($fecha_actual . ' +1 day'));
 
-// Obtener los pedidos de la fecha actual
+// Obtener los pedidos de la fecha actual.
+// Rango de fechas (no DATE(t.fecha)=...) para usar idx_turnero_fecha_tipo;
+// EXISTS en vez de JOIN a pedidos (no multiplica filas: ya no hace falta
+// DISTINCT) y pagado via EXISTS a caja (usa idx_caja_pedido). Esta página
+// se refresca sola todo el día en la pantalla de cocina: cada consulta
+// debe ser puntual, no un escaneo del histórico.
 $query = "
-  SELECT DISTINCT t.id_t, t.id_pedido, t.turno, t.fecha, t.tipo_solicitud, t.estado, 
-       c.cliente, c.celular, c.email, c.direccion, 
-       IF(ca.id_pedidoc IS NOT NULL, 1, 0) AS pagado
+  SELECT t.id_t, t.id_pedido, t.turno, t.fecha, t.tipo_solicitud, t.estado,
+       c.cliente, c.celular, c.email, c.direccion,
+       EXISTS(SELECT 1 FROM caja ca WHERE ca.id_pedidoc = t.id_pedido) AS pagado
 FROM turnero t
-JOIN pedidos p ON t.id_pedido = p.numero_pedido
-JOIN clientes c ON t.id_cliente = c.id  
-LEFT JOIN caja ca ON t.id_pedido = ca.id_pedidoc
-WHERE DATE(t.fecha) = :fecha_actual 
-ORDER BY t.tipo_solicitud, t.turno ASC, 
+JOIN clientes c ON t.id_cliente = c.id
+WHERE t.fecha >= :fecha_ini AND t.fecha < :fecha_fin
+  AND t.tipo_solicitud IN (51, 53)
+  AND EXISTS (SELECT 1 FROM pedidos p WHERE p.numero_pedido = t.id_pedido)
+ORDER BY t.tipo_solicitud, t.turno ASC,
          FIELD(t.estado, 'nuevo', 'en_cocina', 'entregado'), t.fecha DESC
 
 ";
 
 $stmt = $conn->prepare($query);
-$stmt->bindParam(':fecha_actual', $fecha_actual);
+$stmt->bindParam(':fecha_ini', $fecha_actual);
+$stmt->bindParam(':fecha_fin', $fecha_fin);
 $stmt->execute();
 $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -231,37 +238,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (callHTML) {
                     $('#call-container').html(callHTML.innerHTML);
                 }
-
-                actualizarCronometros();
+                // Los cronómetros los actualiza el intervalo global de 1 s
             }
         });
     }
 
-    function actualizarCronometros() {
+    /* Un ÚNICO cronómetro global de 1 s para TODOS los turnos.
+       Antes cada refresco creaba un setInterval nuevo por elemento sin
+       limpiar los anteriores: miles de timers acumulados al día que
+       degradaban la pestaña de cocina hasta "ponerse lenta". */
+    setInterval(function() {
         document.querySelectorAll('.cronometro').forEach(function(element) {
             const fechaPedido = new Date(element.getAttribute('data-fecha'));
+            const diff  = new Date() - fechaPedido; // en milisegundos
 
-            function cronometro() {
-                const ahora = new Date();
-                const diff  = ahora - fechaPedido; // en milisegundos
+            const horas    = Math.floor(diff / 3600000);
+            const minutos  = Math.floor((diff % 3600000) / 60000);
+            const segundos = Math.floor((diff % 60000) / 1000);
 
-                const horas    = Math.floor(diff / 3600000);
-                const minutos  = Math.floor((diff % 3600000) / 60000);
-                const segundos = Math.floor((diff % 60000) / 1000);
-
-                element.innerText = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
-            }
-
-            cronometro();
-            const intervalId = setInterval(cronometro, 1000);
-            element.dataset.intervalId = intervalId;
+            element.innerText = `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`;
         });
-    }
+    }, 1000);
 
-    // Iniciar cron贸metros
-    actualizarCronometros();
-    // Actualizar cada 10 seg
-    setInterval(actualizarTurnos, 10000);
+    // Actualizar cada 15 seg (antes 10: menos carga al servidor sin
+    // perder frescura en cocina)
+    setInterval(actualizarTurnos, 15000);
 });
 </script>
 </body>

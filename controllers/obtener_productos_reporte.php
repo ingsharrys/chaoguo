@@ -23,7 +23,7 @@ FROM caja c
 LEFT JOIN pedidos p ON c.id_pedidoc = p.numero_pedido  -- ✅ Relacionamos correctamente el pedido
 LEFT JOIN productos pr ON p.id_pro = pr.id_pro  -- ✅ Relacionamos el producto
 LEFT JOIN precios pre ON pr.id_pro = pre.idproduc AND p.tipo_producto = pre.tipo_prod  -- ✅ Relacionamos el precio por tipo de producto
-WHERE DATE(c.fecha_caja) = ?  -- ✅ Filtramos por la fecha seleccionada (tomamos la fecha de caja)
+WHERE c.fecha_caja = ?  -- fecha_caja es DATE: comparacion directa usa el indice
 GROUP BY c.id_pedidoc, pr.prefijo, p.tipo_producto, pre.precio, c.costo  
 ORDER BY c.fecha_caja ASC;
 

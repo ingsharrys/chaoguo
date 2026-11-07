@@ -1,6 +1,6 @@
 <?php
 // bootstrap.php (inclúyelo lo más arriba posible en TODAS las páginas)
-define('APP_DEBUG', true); // ponlo en false en producción
+define('APP_DEBUG', false); // producción: nunca mostrar errores al navegador
 
 ini_set('display_errors', APP_DEBUG ? '1' : '0');
 ini_set('display_startup_errors', APP_DEBUG ? '1' : '0');

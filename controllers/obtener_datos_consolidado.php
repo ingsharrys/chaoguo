@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../helpers/auth_guard.php'; // solo personal logueado
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
@@ -27,7 +29,7 @@ $query = "
     FROM caja
     JOIN turnero t ON caja.id_pedidoc = t.id_pedido
     JOIN clientes c ON t.id_cliente = c.id
-    WHERE DATE(caja.fecha_caja) = :fecha
+    WHERE caja.fecha_caja = :fecha
     GROUP BY caja.id_pedidoc
 ";
 

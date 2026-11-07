@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../helpers/auth_guard.php'; // solo personal logueado
+
 // Mostrar errores de PHP
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -10,7 +12,6 @@ $db = new Database();
 $conn = $db->getConnection();
 
 // 📌 Registrar en log los datos recibidos
-error_log("📥 Datos recibidos en procesar_edicion_pedido.php: " . print_r($_POST, true));
 
 // Obtener número de pedido
 $numero_pedido = isset($_POST['numero_pedido']) ? $_POST['numero_pedido'] : null;
@@ -29,7 +30,6 @@ if (isset($_POST['productos_existentes'])) {
             $tipo_producto = $producto['tipo_producto'];
             $detalle = isset($producto['detalle']) ? $producto['detalle'] : 'NULL';
 
-            error_log("🔄 Actualizando producto - ID Pedido: $id_pedido, ID Producto: $nuevo_id_pro, Cantidad: $cantidad, Tipo: $tipo_producto, Detalle: $detalle");
 
             // Nombre y prefijo del catálogo para el NUEVO id_pro: si no se
             // refrescan junto con el id, la fila queda con el texto del
@@ -92,7 +92,6 @@ if (isset($_POST['productos_nuevos']) && is_array($_POST['productos_nuevos'])) {
             $nombre_producto = $productoDatos['nombre'] ?? 'Desconocido';
             $prefijo_producto = $productoDatos['prefijo'] ?? '';
 
-            error_log("🆕 Insertando nuevo producto - ID: $id_pro, Nombre: $nombre_producto, Cantidad: $cantidad, Tipo: $tipo_producto, Detalle: $detalle");
 
             // Insertar con todas las columnas que el panel necesita para
             // mostrar el pedido (producto, cliente, estados, mesa, mesero)
@@ -119,12 +118,10 @@ if (isset($_POST['productos_nuevos']) && is_array($_POST['productos_nuevos'])) {
                 ':estado_boton'   => $ctx['estado_boton'] ?? 'nuevo'
             ]);
         } else {
-            error_log("⚠ Producto nuevo con datos incompletos: " . print_r($producto, true));
         }
     }
 }
 
-error_log("✅ Operación completada con éxito para el pedido: $numero_pedido");
 
 echo "<script>
         console.log('✅ Pedido actualizado con éxito.');

@@ -1,4 +1,11 @@
 <?php
+/* PROTECCIÓN: este script toca/inspecciona la base de datos de producción.
+   Solo se puede ejecutar por consola (CLI) o con la sesión del panel
+   iniciada en este navegador. Antes era ejecutable por CUALQUIERA por URL. */
+if (php_sapi_name() !== 'cli') {
+    require_once __DIR__ . '/helpers/auth_guard.php';
+}
+
 /**
  * EJECUTOR DE LA MIGRACIÓN - ChaoGuo
  * Ejecuta database/migracion_app_nueva.sql usando la conexión de la app
@@ -54,6 +61,13 @@ foreach ($sentencias as $i => $s) {
 
 echo "\n=====================================================\n";
 echo "Resultado: $ok ejecutadas, $ya ya existian, $errores errores reales.\n";
+if ($errores > 0) {
+    echo "\n*****************************************************\n";
+    echo "*** ATENCION: HUBO $errores ERRORES REALES.          ***\n";
+    echo "*** NO des por aplicada la migracion: revisa cada  ***\n";
+    echo "*** linea ERROR de arriba antes de continuar.      ***\n";
+    echo "*****************************************************\n";
+}
 echo "Ahora ejecuta:  php diagnostico.php   para verificar todo.\n";
 echo "Al terminar borra los scripts:  rm ejecutar_migracion.php diagnostico.php\n";
 echo "=====================================================\n";
